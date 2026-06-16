@@ -37,7 +37,7 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {Object.keys(recCounts).length > 0 && (
+      {analytics && Object.keys(recCounts).length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <h2 className="font-semibold mb-4">Recommendations</h2>
           <div className="space-y-2">
