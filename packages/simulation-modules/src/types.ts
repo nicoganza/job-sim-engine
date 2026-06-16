@@ -7,7 +7,7 @@ export interface ValidationResult<T> {
   errors?: string[];
 }
 
-export function validate<T>(schema: z.ZodSchema<T>, data: unknown): ValidationResult<T> {
+export function validate<T>(schema: z.ZodType<T, z.ZodTypeDef, any>, data: unknown): ValidationResult<T> {
   const result = schema.safeParse(data);
   if (result.success) return { success: true, data: result.data };
   return { success: false, errors: result.error.errors.map(e => e.message) };
@@ -50,8 +50,8 @@ export interface SimulationModule<TConfig, TAnswer> {
   label: string;
   description: string;
 
-  configSchema: z.ZodSchema<TConfig>;
-  answerSchema: z.ZodSchema<TAnswer>;
+  configSchema: z.ZodType<TConfig, z.ZodTypeDef, any>;
+  answerSchema: z.ZodType<TAnswer, z.ZodTypeDef, any>;
 
   validateConfig(config: unknown): ValidationResult<TConfig>;
   validateAnswer(answer: unknown): ValidationResult<TAnswer>;
