@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { StepScore } from '@job-sim/shared';
-import { SimulationModule, ValidationResult, ModuleScoringInput, ModuleAnalytics } from '../types';
+import { SimulationModule, ValidationResult, ModuleScoringInput, ModuleAnalytics, validate } from '../types';
 
 const NotificationSchema = z.object({
   id: z.string(),
@@ -42,11 +42,6 @@ const AnswerSchema = z.object({
 type Config = z.infer<typeof ConfigSchema>;
 type Answer = z.infer<typeof AnswerSchema>;
 
-function validate<T>(schema: z.ZodType<T>, data: unknown): ValidationResult<T> {
-  const result = schema.safeParse(data);
-  if (result.success) return { success: true, data: result.data };
-  return { success: false, errors: result.error.errors.map(e => e.message) };
-}
 
 export const notificationReactionModule: SimulationModule<Config, Answer> = {
   type: 'notification_reaction',

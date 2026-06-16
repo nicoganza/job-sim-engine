@@ -7,6 +7,12 @@ export interface ValidationResult<T> {
   errors?: string[];
 }
 
+export function validate<T>(schema: z.ZodSchema<T>, data: unknown): ValidationResult<T> {
+  const result = schema.safeParse(data);
+  if (result.success) return { success: true, data: result.data };
+  return { success: false, errors: result.error.errors.map(e => e.message) };
+}
+
 export interface SessionScoringContext {
   sessionId: string;
   candidateId: string;
@@ -44,8 +50,8 @@ export interface SimulationModule<TConfig, TAnswer> {
   label: string;
   description: string;
 
-  configSchema: z.ZodType<TConfig>;
-  answerSchema: z.ZodType<TAnswer>;
+  configSchema: z.ZodSchema<TConfig>;
+  answerSchema: z.ZodSchema<TAnswer>;
 
   validateConfig(config: unknown): ValidationResult<TConfig>;
   validateAnswer(answer: unknown): ValidationResult<TAnswer>;
