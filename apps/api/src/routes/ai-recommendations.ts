@@ -25,7 +25,7 @@ router.post('/:runId/accept', async (req: AuthRequest, res) => {
   const existing = await prisma.simulationStep.findMany({ where: { simulationId: parsed.data.simulationId }, select: { orderIndex: true } });
   let maxIndex = existing.length ? Math.max(...existing.map(s => s.orderIndex)) : -1;
 
-  const createdSteps = [];
+  const createdSteps: object[] = [];
   for (const step of selectedSteps) {
     maxIndex++;
     const created = await prisma.simulationStep.create({

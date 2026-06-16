@@ -25,6 +25,7 @@ RUN node_modules/.bin/prisma generate
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+RUN apk add --no-cache openssl
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/apps/worker/dist ./apps/worker/dist
