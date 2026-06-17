@@ -224,7 +224,7 @@ function CrmPrioritizationRenderer({ config, answer, onChange, onTrackEvent }: a
       {config.requiredExplanation && (
         <div>
           <label className="text-sm font-medium block mb-1">Explain your ranking</label>
-          <textarea className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm min-h-[100px]" placeholder="Why did you prioritize these accounts in this order?" value={answer?.explanation ?? ''} onChange={e => onChange({ ...answer, explanation: e.target.value })} />
+          <textarea className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm min-h-[100px]" placeholder="Why did you prioritize these accounts in this order?" value={answer?.explanation ?? ''} onChange={e => onChange({ orderedRecordIds: ordered, ...answer, explanation: e.target.value })} />
         </div>
       )}
     </div>

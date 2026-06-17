@@ -417,37 +417,37 @@ async function handleNotificationStep() {
   log('  → Notification Reaction: selecting actions...');
   await wait(1000);
 
-  // For each notification container, find and click the appropriate action
-  const notifContainers = await page.$$('.border.border-gray-200.rounded-xl');
-  let containerIdx = 0;
-  for (const container of notifContainers) {
-    const buttons = await container.$$('button');
-    for (const btn of buttons) {
-      const text = await btn.evaluate((el: Element) => el.textContent?.trim() ?? '');
-      // Pick reply for most, ignore for newsletter (3rd notification)
-      const targetAction = containerIdx === 2 ? 'ignore' : 'reply';
-      if (text === targetAction) {
-        await btn.click();
-        await wait(400);
-        break;
-      }
-    }
-    containerIdx++;
-  }
+  // Use page.evaluate to click action buttons for each notification
+  // Notifications are rendered as divs with class "border border-gray-200 rounded-xl p-4 space-y-3"
+  // (the outer container has p-6, so we filter by presence of action buttons directly inside)
+  await page.evaluate(() => {
+    const allDivs = Array.from(document.querySelectorAll('div.border.border-gray-200.rounded-xl'));
+    // Filter to divs that have flex-gap action buttons (the notification card divs)
+    const notifDivs = allDivs.filter(div => {
+      const btns = Array.from(div.querySelectorAll(':scope > div > button, :scope > button'));
+      return btns.length > 0;
+    });
+    notifDivs.forEach((div, i) => {
+      // For 3rd notification (newsletter), pick 'ignore'. For others, pick 'reply'.
+      const targetAction = i === 2 ? 'ignore' : 'reply';
+      const allBtns = Array.from(div.querySelectorAll('button'));
+      const btn = allBtns.find((b: Element) => (b as HTMLButtonElement).textContent?.trim() === targetAction);
+      if (btn) (btn as HTMLButtonElement).click();
+    });
+  });
 
-  // Fill in reply textareas that appeared
+  await wait(800);
+
+  // Fill in reply textareas that appeared after clicking reply
   const textareas = await page.$$('textarea');
   const replies = [
     'Ciao Chiara, certo! Ti mando subito la documentazione tecnica sull\'integrazione SAP. Ti propongo anche una call tecnica questa settimana — quando sei disponibile?',
     'Ciao Giulia! Mattinata produttiva: discovery call con Esposito (ottima, urgenza confermata), CRM prioritizzato, handoff scritto. Ti racconto in call!',
   ];
-  let ri = 0;
-  for (const ta of textareas) {
-    if (ri < replies.length) {
-      await ta.click();
-      await ta.type(replies[ri], { delay: 10 });
-      ri++;
-    }
+  for (let i = 0; i < Math.min(textareas.length, replies.length); i++) {
+    await textareas[i].click();
+    await textareas[i].type(replies[i], { delay: 10 });
+    await wait(300);
   }
 
   await wait(500);

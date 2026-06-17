@@ -108,6 +108,9 @@ router.post('/:simulationId/publish', async (req: AuthRequest, res) => {
   });
 
   await prisma.simulation.update({ where: { id: sim.id }, data: { status: 'active', currentVersionId: version.id } });
+  if (sim.jobPostingId) {
+    await prisma.jobPosting.update({ where: { id: sim.jobPostingId }, data: { activeSimulationId: sim.id, activeSimulationVersionId: version.id } });
+  }
   res.status(201).json(version);
 });
 
