@@ -7,17 +7,16 @@ async function handler(req: NextRequest) {
 
   const headers = new Headers();
   req.headers.forEach((v, k) => {
-    if (k !== 'host') headers.set(k, v);
+    if (k !== 'host' && k !== 'connection') headers.set(k, v);
   });
 
   const hasBody = req.method !== 'GET' && req.method !== 'HEAD';
+  const body = hasBody ? await req.arrayBuffer() : undefined;
 
   const res = await fetch(url, {
     method: req.method,
     headers,
-    body: hasBody ? req.body : undefined,
-    // @ts-expect-error duplex is required for streaming body in Node fetch
-    duplex: 'half',
+    body: body ? Buffer.from(body) : undefined,
   });
 
   const resHeaders = new Headers();
@@ -25,7 +24,8 @@ async function handler(req: NextRequest) {
     if (k !== 'content-encoding' && k !== 'transfer-encoding') resHeaders.set(k, v);
   });
 
-  return new NextResponse(res.body, { status: res.status, headers: resHeaders });
+  const data = await res.arrayBuffer();
+  return new NextResponse(data, { status: res.status, headers: resHeaders });
 }
 
 export const GET = handler;

@@ -20,22 +20,24 @@ router.post('/login', async (req, res) => {
   res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
 });
 
-router.post('/register', async (req, res) => {
-  const { companyName, name, email, password } = req.body;
-  if (!companyName || !email || !password) { res.status(400).json({ error: 'companyName, email and password are required' }); return; }
-  if (password.length < 8) { res.status(400).json({ error: 'Password must be at least 8 characters' }); return; }
+router.post('/register', async (req, res, next) => {
+  try {
+    const { companyName, name, email, password } = req.body ?? {};
+    if (!companyName || !email || !password) { res.status(400).json({ error: 'companyName, email and password are required' }); return; }
+    if (password.length < 8) { res.status(400).json({ error: 'Password must be at least 8 characters' }); return; }
 
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) { res.status(409).json({ error: 'An account with this email already exists' }); return; }
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) { res.status(409).json({ error: 'An account with this email already exists' }); return; }
 
-  const slug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Math.random().toString(36).slice(2, 7);
-  const passwordHash = await bcrypt.hash(password, 10);
+    const slug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Math.random().toString(36).slice(2, 7);
+    const passwordHash = await bcrypt.hash(password, 10);
 
-  const org = await prisma.organization.create({ data: { name: companyName, slug } });
-  const user = await prisma.user.create({ data: { organizationId: org.id, email, name: name || email.split('@')[0], role: 'owner', passwordHash } });
+    const org = await prisma.organization.create({ data: { name: companyName, slug } });
+    const user = await prisma.user.create({ data: { organizationId: org.id, email, name: name || email.split('@')[0], role: 'owner', passwordHash } });
 
-  const token = jwt.sign({ userId: user.id, organizationId: org.id, role: user.role }, process.env.JWT_SECRET || 'dev-secret', { expiresIn: '7d' });
-  res.status(201).json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
+    const token = jwt.sign({ userId: user.id, organizationId: org.id, role: user.role }, process.env.JWT_SECRET || 'dev-secret', { expiresIn: '7d' });
+    res.status(201).json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
+  } catch (err) { next(err); }
 });
 
 router.get('/me', requireAuth, async (req: AuthRequest, res) => {
