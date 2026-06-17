@@ -1,16 +1,21 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma';
 import { AuthRequest, requireAuth } from '../middleware/auth';
 
 const router = Router();
 
-// Simple dev login — in production, integrate proper auth (Clerk, Auth0, etc.)
 router.post('/login', async (req, res) => {
-  const { email } = req.body;
+  const { email, password } = req.body;
   if (!email) { res.status(400).json({ error: 'email required' }); return; }
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) { res.status(401).json({ error: 'User not found' }); return; }
+  if (!user) { res.status(401).json({ error: 'Invalid email or password' }); return; }
+  if (user.passwordHash) {
+    if (!password) { res.status(401).json({ error: 'Password required' }); return; }
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) { res.status(401).json({ error: 'Invalid email or password' }); return; }
+  }
   const token = jwt.sign({ userId: user.id, organizationId: user.organizationId, role: user.role }, process.env.JWT_SECRET || 'dev-secret', { expiresIn: '7d' });
   res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
 });
