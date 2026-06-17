@@ -149,12 +149,51 @@ async function ensureSimulationAndGetApplyUrl(): Promise<string> {
     instructions: 'Conduci una discovery call con Roberto. Scopri il suo problema prima di parlare del prodotto.',
     timeLimitSeconds: 600,
     config: {
-      publicCandidateBrief: 'Roberto Esposito, COO di Impresa Edile Esposito (350 dip., 25 cantieri) ha richiesto una demo. Conduci una discovery call per capire il suo problema.',
-      aiPersona: { name: 'Roberto Esposito', role: 'COO', company: 'Impresa Edile Esposito SpA' },
-      hiddenPersonaContext: { realPain: 'Mancanza visibilità pipeline, WhatsApp chaos', budget: '30-50k€', urgency: 'CdA tra 6 settimane' },
-      hiddenScoringRubric: { discoveredPain: true, discoveredBudget: true, avoidedEarlyPitch: true },
+      callType: 'sales_discovery',
+      title: 'Discovery Call con Roberto Esposito',
+      publicCandidateBrief: 'Roberto Esposito, COO di Impresa Edile Esposito (350 dip., 25 cantieri) ha richiesto una demo. Conduci una discovery call per capire il suo problema prima di presentare il prodotto.',
       estimatedDurationSeconds: 300,
       maxDurationSeconds: 600,
+      aiPersona: {
+        name: 'Roberto Esposito',
+        role: 'COO',
+        company: 'Impresa Edile Esposito SpA',
+        personality: 'Diretto, pragmatico, scettico ma aperto',
+        communicationStyle: 'Conciso, preferisce dati a promesse',
+        baselineMood: 'busy',
+      },
+      publicBusinessContext: {
+        candidateCompany: 'Pillar',
+        productOrService: 'Pipeline management SaaS',
+        valueProposition: 'Visibilità real-time sulla pipeline commerciale',
+        knownContext: ['Ha richiesto una demo', 'Urgenza dichiarata con la pipeline'],
+      },
+      hiddenBuyerState: {
+        initialInterestLevel: 55,
+        initialTrustLevel: 35,
+        initialUrgencyLevel: 70,
+        hiddenObjections: [
+          { id: 'obj-1', type: 'trust', description: 'Ho già provato un CRM — non lo ha usato nessuno.', revealCondition: 'Ask about past tools', resolutionCondition: 'Explain simplicity', severity: 'high' },
+        ],
+        buyingCriteria: [
+          { id: 'bc-1', criterion: 'Facilità adozione PM', importance: 'critical' },
+          { id: 'bc-2', criterion: 'Visibilità real-time COO', importance: 'critical' },
+        ],
+        dealBreakers: ['Richiede formazione > 2 giorni'],
+      },
+      allowedOutcomes: ['schedule_demo', 'schedule_follow_up', 'send_information', 'no_next_step'],
+      guardrails: {
+        doNotRevealHiddenObjectionsDirectly: true,
+        requireCandidateDiscoveryBeforeRevealingObjections: true,
+        preventEasyAgreement: true,
+        stayInPersona: true,
+        refuseOutOfScenarioRequests: true,
+      },
+      scoringRubric: [
+        { key: 'discovery_depth', label: 'Discovery depth', maxScore: 40, description: 'Did candidate uncover real pain?' },
+        { key: 'no_early_pitch', label: 'No early pitch', maxScore: 30, description: 'Avoided premature product presentation?' },
+        { key: 'next_step', label: 'Concrete next step', maxScore: 30, description: 'Agreed on next step?' },
+      ],
     },
   });
 
@@ -185,12 +224,35 @@ async function ensureSimulationAndGetApplyUrl(): Promise<string> {
     timeLimitSeconds: 240,
     config: {
       scenarioContext: 'Sono le 11:30. Hai finito la call con Roberto. Arrivano 3 notifiche.',
-      allowedActions: ['reply', 'schedule_later', 'escalate', 'ignore'],
+      taskPrompt: 'Per ogni notifica scegli l\'azione più appropriata e scrivi la risposta se necessario.',
+      allowedActions: ['reply', 'schedule_followup', 'escalate', 'ignore'],
       notifications: [
-        { id: 'n1', channel: 'email', senderName: 'Chiara Ferretti', senderRole: 'CEO, Ferretti Costruzioni', message: 'Avete integrazione con SAP? La nostra implementazione parte tra 3 settimane.' },
-        { id: 'n2', channel: 'slack', senderName: 'Giulia Ferrari', senderRole: 'Sales Manager', message: 'Come sta andando? Update veloce sulla morning session?' },
-        { id: 'n3', channel: 'email', senderName: 'Newsletter SaaS Weekly', senderRole: 'Newsletter', message: 'Top 10 SaaS Growth Hacks this week...' },
+        {
+          id: 'n1', channel: 'email', senderName: 'Chiara Ferretti', senderRole: 'CEO, Ferretti Costruzioni',
+          timestampOffsetMinutes: 0,
+          message: 'Avete integrazione con SAP? La nostra implementazione parte tra 3 settimane.',
+          hiddenUrgency: 90, hiddenImportance: 85,
+          expectedActionTypes: ['reply'],
+          hiddenRationale: 'High urgency deadline = immediate reply',
+        },
+        {
+          id: 'n2', channel: 'slack', senderName: 'Giulia Ferrari', senderRole: 'Sales Manager',
+          timestampOffsetMinutes: 5,
+          message: 'Come sta andando? Update veloce sulla morning session?',
+          hiddenUrgency: 75, hiddenImportance: 70,
+          expectedActionTypes: ['reply'],
+          hiddenRationale: 'Manager check-in = reply',
+        },
+        {
+          id: 'n3', channel: 'email', senderName: 'Newsletter SaaS Weekly', senderRole: 'Newsletter',
+          timestampOffsetMinutes: 10,
+          message: 'Top 10 SaaS Growth Hacks this week...',
+          hiddenUrgency: 5, hiddenImportance: 10,
+          expectedActionTypes: ['ignore', 'schedule_followup'],
+          hiddenRationale: 'Newsletter = ignore',
+        },
       ],
+      scoringWeights: { actionChoice: 0.50, prioritization: 0.20, communication: 0.20, escalationJudgment: 0.10 },
     },
   });
 
@@ -266,7 +328,7 @@ async function ensureSimulationAndGetApplyUrl(): Promise<string> {
     email: 'sofia.conti@test.com',
     name: 'Sofia Conti',
   }, token);
-  const appToken = invite.applicationToken ?? invite.application?.applicationToken;
+  const appToken = invite.applicationToken ?? invite.application?.applicationToken ?? invite.application?.id;
   const applyUrl = `${WEB}/apply/${appToken}`;
   log(`✓ Candidate invited. Apply URL: ${applyUrl}`);
   return applyUrl;
@@ -277,6 +339,22 @@ async function ensureSimulationAndGetApplyUrl(): Promise<string> {
 async function clickButton(selector: string, timeout = 8000) {
   await page.waitForSelector(selector, { timeout });
   await page.click(selector);
+}
+
+async function clickButtonByText(text: string, timeout = 8000) {
+  await page.waitForFunction(
+    (t: string) => {
+      const btns = Array.from(document.querySelectorAll('button'));
+      return btns.some(b => b.textContent?.includes(t) && !(b as HTMLButtonElement).disabled);
+    },
+    { timeout },
+    text
+  );
+  await page.evaluate((t: string) => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const btn = btns.find(b => b.textContent?.includes(t) && !(b as HTMLButtonElement).disabled);
+    if (btn) (btn as HTMLButtonElement).click();
+  }, text);
 }
 
 async function typeInto(selector: string, text: string, timeout = 8000) {
@@ -299,8 +377,7 @@ async function waitForURL(pattern: RegExp, timeout = 15000) {
 async function handleWelcomeStep() {
   log('  → Welcome step: reading for 6 seconds...');
   await wait(6000);
-  // click Continue
-  await clickButton('button:has-text("Continue")');
+  await clickButtonByText('Continue');
 }
 
 async function handleCrmStep() {
@@ -315,43 +392,47 @@ async function handleCrmStep() {
     { delay: 15 }
   );
   await wait(500);
-  await clickButton('button:has-text("Submit Step")');
+  await clickButtonByText('Submit Step');
 }
 
 async function handleSimulatedCallStep() {
   log('  → Simulated Call: starting → waiting 8s → ending...');
-  await page.waitForSelector('button:has-text("Start Call")', { timeout: 8000 });
-  await page.click('button:has-text("Start Call")');
-  await wait(8000); // simulate 8s of conversation
-  await clickButton('button:has-text("End Call")');
+  await clickButtonByText('Start Call', 10000);
+  await wait(8000);
+  await clickButtonByText('End Call');
   await wait(1000);
-  await clickButton('button:has-text("Submit Step")');
+  await clickButtonByText('Submit Step');
 }
 
 async function handleFreeTextStep(text: string) {
   log(`  → Free text: typing ${text.length} chars...`);
-  await page.waitForSelector('textarea', { timeout: 5000 });
+  await page.waitForSelector('textarea', { timeout: 8000 });
   await page.click('textarea');
   await page.type('textarea', text, { delay: 10 });
   await wait(500);
-  await clickButton('button:has-text("Submit Step")');
+  await clickButtonByText('Submit Step');
 }
 
 async function handleNotificationStep() {
   log('  → Notification Reaction: selecting actions...');
   await wait(1000);
 
-  // For each notification, pick an action
-  const actionButtons = await page.$$('button');
-  for (const btn of actionButtons) {
-    const text = await btn.evaluate(el => el.textContent?.trim() ?? '');
-    if (text === 'reply') {
-      await btn.click();
-      await wait(300);
-    } else if (text === 'ignore') {
-      await btn.click();
-      await wait(300);
+  // For each notification container, find and click the appropriate action
+  const notifContainers = await page.$$('.border.border-gray-200.rounded-xl');
+  let containerIdx = 0;
+  for (const container of notifContainers) {
+    const buttons = await container.$$('button');
+    for (const btn of buttons) {
+      const text = await btn.evaluate((el: Element) => el.textContent?.trim() ?? '');
+      // Pick reply for most, ignore for newsletter (3rd notification)
+      const targetAction = containerIdx === 2 ? 'ignore' : 'reply';
+      if (text === targetAction) {
+        await btn.click();
+        await wait(400);
+        break;
+      }
     }
+    containerIdx++;
   }
 
   // Fill in reply textareas that appeared
@@ -370,7 +451,7 @@ async function handleNotificationStep() {
   }
 
   await wait(500);
-  await clickButton('button:has-text("Submit Step")');
+  await clickButtonByText('Submit Step');
 }
 
 // ── Main flow ────────────────────────────────────────────────────────────────
@@ -392,19 +473,26 @@ async function run() {
 
   // ── Apply / Pre-sim briefing ──────────────────────────────────────────────
   log(`Navigating to apply URL...`);
-  await page.goto(applyUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+  await page.goto(applyUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+  // Wait for React hydration — look for the Begin Simulation button
+  await page.waitForFunction(
+    () => document.querySelector('button') !== null && !document.body.textContent?.includes('Loading...'),
+    { timeout: 20000 }
+  );
+
   await screenshot('01-apply');
-  log(`  Page: ${page.url()}`);
+  log(`  Page loaded: ${page.url()}`);
 
   // Click "Begin Simulation"
-  await page.waitForSelector('button', { timeout: 10000 });
-  const beginBtn = await page.$x('//button[contains(text(), "Begin") or contains(text(), "Start") or contains(text(), "Inizia")]');
-  if (beginBtn.length > 0) {
-    await (beginBtn[0] as any).click();
-  } else {
-    // Try clicking any primary button
-    await page.click('button[class*="blue"], button[class*="indigo"], button[class*="green"]');
-  }
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const btn = btns.find(b => b.textContent?.includes('Begin') || b.textContent?.includes('Start') || b.textContent?.includes('Inizia'));
+    if (btn) (btn as HTMLButtonElement).click();
+  });
+
+  // Wait for navigation to session overview
+  await page.waitForFunction(() => window.location.href.includes('/simulation/'), { timeout: 15000 });
   await wait(2000);
   await screenshot('02-session-started');
   log(`  Session started. URL: ${page.url()}`);
@@ -419,12 +507,23 @@ async function run() {
     // Check if we're on a step page
     if (url.includes('/simulation/') && url.includes('/step/')) {
       stepCount++;
-      await wait(1500); // Let the step load
-      await screenshot(`0${stepCount + 2}-step-${stepCount}`);
+      // Wait for page to load fully
+      await page.waitForFunction(
+        () => !document.body.textContent?.includes('Loading...'),
+        { timeout: 10000 }
+      ).catch(() => {});
+      await wait(1000);
+      await screenshot(`step-${stepCount.toString().padStart(2,'0')}`);
 
       // Detect step type from page
-      const typeEl = await page.$('p.text-xs.text-gray-400');
-      const stepType = typeEl ? await typeEl.evaluate(el => el.textContent?.trim() ?? '') : '';
+      const stepType = await page.evaluate(() => {
+        const els = document.querySelectorAll('p');
+        for (const el of els) {
+          const t = el.textContent?.toLowerCase() ?? '';
+          if (t.includes('welcome') || t.includes('crm') || t.includes('prioritization') || t.includes('simulated call') || t.includes('notification') || t.includes('free text') || t.includes('onboarding')) return el.textContent?.trim() ?? '';
+        }
+        return '';
+      });
       log(`\nStep ${stepCount} — type: "${stepType}" — ${url}`);
 
       try {
@@ -450,11 +549,9 @@ async function run() {
           }
           await handleFreeTextStep(answer || 'Test answer: completing this step in the SDR simulation flow.');
         } else {
-          log(`  ⚠ Unknown step type "${stepType}" — trying generic submit`);
+          log(`  ⚠ Unknown step type "${stepType}" — trying generic submit after 3s`);
           await wait(3000);
-          // Try to find and click any submit button
-          const submitBtn = await page.$('button:has-text("Submit"), button:has-text("Continue")');
-          if (submitBtn) await submitBtn.click();
+          await clickButtonByText('Submit Step').catch(() => clickButtonByText('Continue').catch(() => {}));
         }
       } catch (e: any) {
         err(`Step ${stepCount} error: ${e.message}`);
@@ -468,18 +565,19 @@ async function run() {
 
     // Check if we're on session overview page
     if (url.includes('/simulation/') && !url.includes('/step/') && !url.includes('/completed')) {
-      log(`Session overview page. Looking for next step button...`);
+      log(`Session overview page. Looking for next step link...`);
       await wait(2000);
       await screenshot(`overview-${stepCount}`);
-      // Click Continue to next step
-      const continueBtn = await page.$('a[href*="/step/"], button:has-text("Continue"), button:has-text("Start")');
-      if (continueBtn) {
-        await continueBtn.click();
-        await wait(2000);
-      } else {
-        log(`  No continue button found — checking for step links`);
-        break;
-      }
+      // Find step link and click it
+      const clicked = await page.evaluate(() => {
+        const a = document.querySelector('a[href*="/step/"]') as HTMLAnchorElement | null;
+        const btn = Array.from(document.querySelectorAll('button')).find(b => b.textContent?.includes('Continue') || b.textContent?.includes('Start'));
+        if (a) { a.click(); return true; }
+        if (btn) { (btn as HTMLButtonElement).click(); return true; }
+        return false;
+      });
+      if (!clicked) { log(`  No navigation found on overview page`); break; }
+      await wait(2000);
       continue;
     }
 

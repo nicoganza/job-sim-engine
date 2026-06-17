@@ -21,11 +21,11 @@ app.get('/health', (_, res) => res.json({ ok: true, ts: new Date().toISOString()
 
 app.use('/api', authRouter);
 app.use('/api/public', publicRouter);
+app.use('/api/candidate', candidateRouter);   // must come before /api catch-all mounts
 app.use('/api/jobs', jobsRouter);
 app.use('/api/simulations', simulationsRouter);
 app.use('/api', simulationsRouter); // for /api/jobs/:jobId/simulation routes
 app.use('/api/ai-recommendation-runs', aiRecommendationsRouter);
-app.use('/api/candidate', candidateRouter);
 app.use('/api', realtimeCallsRouter);
 app.use('/api', resultsRouter);
 
