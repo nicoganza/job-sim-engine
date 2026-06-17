@@ -5,9 +5,9 @@ import { useEffect, useState } from 'react';
 import { getUser, clearToken } from '@/lib/auth';
 
 const navItems = [
-  { href: '/admin/jobs', label: 'Jobs', icon: '💼' },
-  { href: '/admin/analytics', label: 'Analytics', icon: '📊' },
-  { href: '/admin/settings', label: 'Settings', icon: '⚙️' },
+  { href: '/admin/jobs', label: 'Offerte', icon: '💼' },
+  { href: '/admin/analytics', label: 'Analisi', icon: '📊' },
+  { href: '/admin/settings', label: 'Impostazioni', icon: '⚙️' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -73,7 +73,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <span className="text-base leading-none">→</span>
-            Sign out
+            Esci
           </button>
         </div>
       </aside>

@@ -24,20 +24,20 @@ export default function JobsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Job Postings</h1>
+        <h1 className="text-2xl font-bold">Offerte di lavoro</h1>
         <Link href="/admin/jobs/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-          + New Job
+          + Nuova offerta
         </Link>
       </div>
 
-      {loading && <p className="text-gray-500">Loading...</p>}
+      {loading && <p className="text-gray-500">Caricamento...</p>}
       {error && <p className="text-red-600">{error}</p>}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              {['Title', 'Department', 'Status', 'Created', 'Actions'].map(h => (
+              {['Titolo', 'Dipartimento', 'Stato', 'Creata', 'Azioni'].map(h => (
                 <th key={h} className="text-left px-4 py-3 font-medium text-gray-600">{h}</th>
               ))}
             </tr>
@@ -54,13 +54,13 @@ export default function JobsPage() {
                 </td>
                 <td className="px-4 py-3 text-gray-500">{new Date(job.createdAt).toLocaleDateString()}</td>
                 <td className="px-4 py-3 flex gap-2">
-                  <Link href={`/admin/jobs/${job.id}`} className="text-blue-600 hover:underline text-xs">Edit</Link>
-                  <Link href={`/admin/jobs/${job.id}/candidates`} className="text-gray-600 hover:underline text-xs">Candidates</Link>
+                  <Link href={`/admin/jobs/${job.id}`} className="text-blue-600 hover:underline text-xs">Modifica</Link>
+                  <Link href={`/admin/jobs/${job.id}/candidates`} className="text-gray-600 hover:underline text-xs">Candidati</Link>
                 </td>
               </tr>
             ))}
             {!loading && jobs.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">No jobs yet. Create your first one.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">Nessuna offerta ancora. Creane una.</td></tr>
             )}
           </tbody>
         </table>

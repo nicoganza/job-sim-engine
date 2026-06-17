@@ -57,7 +57,7 @@ export default function JobDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-slate-400">Loading…</div>
+        <div className="text-slate-400">Caricamento…</div>
       </div>
     );
   }
@@ -65,8 +65,8 @@ export default function JobDetailPage() {
   if (!job) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
-        <p className="text-slate-500">This position is no longer available.</p>
-        <Link href="/jobs" className="text-indigo-600 text-sm hover:underline">← Back to all jobs</Link>
+        <p className="text-slate-500">Questa posizione non è più disponibile.</p>
+        <Link href="/jobs" className="text-indigo-600 text-sm hover:underline">← Tutte le offerte</Link>
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default function JobDetailPage() {
           <span className="font-semibold text-slate-900">JobSim</span>
         </Link>
         <Link href="/jobs" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
-          ← All jobs
+          ← Tutte le offerte
         </Link>
       </nav>
 
@@ -109,9 +109,9 @@ export default function JobDetailPage() {
             <div className="flex gap-3">
               <span className="text-2xl">🎯</span>
               <div>
-                <h3 className="font-semibold text-indigo-900 mb-1">Work simulation included</h3>
+                <h3 className="font-semibold text-indigo-900 mb-1">Simulazione di lavoro inclusa</h3>
                 <p className="text-indigo-700 text-sm leading-relaxed">
-                  This role uses a short work simulation instead of a cover letter. You&apos;ll complete realistic tasks that give you a chance to show your skills directly.
+                  Questo ruolo utilizza una breve simulazione di lavoro invece di una lettera di presentazione. Completerai task realistici che ti permettono di mostrare le tue competenze direttamente.
                 </p>
               </div>
             </div>
@@ -121,37 +121,37 @@ export default function JobDetailPage() {
         {/* Apply card */}
         {!showForm ? (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
-            <h2 className="font-semibold text-slate-900 text-lg mb-2">Interested in this role?</h2>
-            <p className="text-slate-500 text-sm mb-6">Apply in under a minute — no cover letter needed.</p>
+            <h2 className="font-semibold text-slate-900 text-lg mb-2">Sei interessato a questo ruolo?</h2>
+            <p className="text-slate-500 text-sm mb-6">Candidati in meno di un minuto — nessuna lettera di presentazione richiesta.</p>
             <button
               onClick={() => setShowForm(true)}
               className="bg-indigo-600 text-white font-semibold px-8 py-3 rounded-xl hover:bg-indigo-700 transition-colors"
             >
-              Apply now
+              Candidati ora
             </button>
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
-            <h2 className="font-semibold text-slate-900 text-lg mb-6">Your details</h2>
+            <h2 className="font-semibold text-slate-900 text-lg mb-6">I tuoi dati</h2>
             <form onSubmit={handleApply} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Full name</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Nome e cognome</label>
                 <input
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  placeholder="Jane Smith"
+                  placeholder="Mario Rossi"
                   required
                   className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Email address</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Indirizzo email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="jane@email.com"
+                  placeholder="mario@email.com"
                   required
                   className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
                 />
@@ -165,14 +165,14 @@ export default function JobDetailPage() {
                   onClick={() => setShowForm(false)}
                   className="flex-1 border border-slate-200 text-slate-600 font-medium py-2.5 rounded-lg hover:bg-slate-50 transition-colors text-sm"
                 >
-                  Back
+                  Indietro
                 </button>
                 <button
                   type="submit"
                   disabled={applying}
                   className="flex-1 bg-indigo-600 text-white font-semibold py-2.5 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors text-sm"
                 >
-                  {applying ? 'Submitting…' : 'Submit application'}
+                  {applying ? 'Invio…' : 'Invia candidatura'}
                 </button>
               </div>
             </form>

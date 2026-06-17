@@ -37,24 +37,24 @@ export default function CandidatesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Candidates</h1>
+      <h1 className="text-2xl font-bold">Candidati</h1>
 
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="font-semibold mb-3">Invite Candidate</h2>
+        <h2 className="font-semibold mb-3">Invita candidato</h2>
         <div className="flex gap-2">
-          <input type="email" placeholder="candidate@email.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
+          <input type="email" placeholder="candidato@email.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
             className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" />
           <button onClick={invite} disabled={inviting} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
-            {inviting ? 'Inviting...' : 'Invite'}
+            {inviting ? 'Invio...' : 'Invita'}
           </button>
         </div>
       </div>
 
-      {loading ? <p className="text-gray-500">Loading...</p> : (
+      {loading ? <p className="text-gray-500">Caricamento...</p> : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>{['Name', 'Email', 'App Status', 'Sim Status', 'Score', 'Recommendation', 'Actions'].map(h => <th key={h} className="text-left px-4 py-3 font-medium text-gray-600">{h}</th>)}</tr>
+              <tr>{['Nome', 'Email', 'Stato candidatura', 'Stato sim.', 'Punteggio', 'Raccomandazione', 'Azioni'].map(h => <th key={h} className="text-left px-4 py-3 font-medium text-gray-600">{h}</th>)}</tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {apps.map(app => {
@@ -71,12 +71,12 @@ export default function CandidatesPage() {
                       {result?.recommendation ? <span className={`text-xs px-2 py-1 rounded-full font-medium ${recColor[result.recommendation] ?? ''}`}>{result.recommendation}</span> : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      {session?.id && <Link href={`/admin/candidates/${app.candidate.email}/sessions/${session.id}`} className="text-blue-600 hover:underline text-xs">View</Link>}
+                      {session?.id && <Link href={`/admin/candidates/${app.candidate.email}/sessions/${session.id}`} className="text-blue-600 hover:underline text-xs">Vedi</Link>}
                     </td>
                   </tr>
                 );
               })}
-              {apps.length === 0 && <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">No candidates yet.</td></tr>}
+              {apps.length === 0 && <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">Nessun candidato ancora.</td></tr>}
             </tbody>
           </table>
         </div>

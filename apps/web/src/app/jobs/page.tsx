@@ -42,18 +42,18 @@ export default function JobsBoardPage() {
           <span className="font-semibold text-slate-900">JobSim</span>
         </Link>
         <Link href="/login/company" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
-          Company login →
+          Accesso aziende →
         </Link>
       </nav>
 
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-8 py-12 text-center">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Open positions</h1>
-        <p className="text-slate-500 mb-8">Apply and complete a real work simulation to stand out.</p>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Posizioni aperte</h1>
+        <p className="text-slate-500 mb-8">Candidati e completa una simulazione di lavoro reale per distinguerti.</p>
         <div className="max-w-md mx-auto">
           <input
             type="text"
-            placeholder="Search by title, department or company…"
+            placeholder="Cerca per titolo, dipartimento o azienda…"
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
@@ -74,7 +74,7 @@ export default function JobsBoardPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-slate-400">
-            {jobs.length === 0 ? 'No open positions right now. Check back soon.' : 'No jobs match your search.'}
+            {jobs.length === 0 ? 'Nessuna posizione aperta al momento. Torna a controllare presto.' : 'Nessuna offerta corrisponde alla ricerca.'}
           </div>
         ) : (
           <div className="space-y-4">
@@ -90,7 +90,7 @@ export default function JobsBoardPage() {
                     <p className="text-sm text-slate-500 mt-0.5">{job.organization.name}</p>
                     <p className="text-sm text-slate-600 mt-3 line-clamp-2 leading-relaxed">{job.description}</p>
                   </div>
-                  <span className="text-indigo-600 text-sm font-medium shrink-0 mt-1 group-hover:translate-x-0.5 transition-transform">Apply →</span>
+                  <span className="text-indigo-600 text-sm font-medium shrink-0 mt-1 group-hover:translate-x-0.5 transition-transform">Candidati →</span>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-4">
                   {job.department && <Tag>{job.department}</Tag>}

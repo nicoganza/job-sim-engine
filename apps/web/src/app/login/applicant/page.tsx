@@ -10,7 +10,6 @@ export default function ApplicantLoginPage() {
   const [loading, setLoading] = useState(false);
 
   function extractToken(raw: string): string {
-    // Accept a full URL like https://.../apply/abc123 or just the token
     try {
       const url = new URL(raw.trim());
       const parts = url.pathname.split('/');
@@ -26,14 +25,14 @@ export default function ApplicantLoginPage() {
     e.preventDefault();
     setError('');
     const tok = extractToken(token);
-    if (!tok) { setError('Please enter your invite token or link.'); return; }
+    if (!tok) { setError('Inserisci il token o il link di invito.'); return; }
     setLoading(true);
     try {
       const res = await fetch(`/api/candidate/application/${tok}`);
-      if (!res.ok) { setError('Invalid or expired invite link. Check the email you received.'); return; }
+      if (!res.ok) { setError('Link di invito non valido o scaduto. Controlla l\'email ricevuta.'); return; }
       router.push(`/apply/${tok}`);
     } catch {
-      setError('Network error — please try again.');
+      setError('Errore di rete — riprova.');
     } finally {
       setLoading(false);
     }
@@ -54,9 +53,9 @@ export default function ApplicantLoginPage() {
         <div className="w-full max-w-sm">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-slate-900 mb-2">Access your simulation</h1>
+              <h1 className="text-2xl font-bold text-slate-900 mb-2">Accedi alla tua simulazione</h1>
               <p className="text-slate-500 text-sm leading-relaxed">
-                Paste the invite link or token from the email you received.
+                Incolla il link di invito o il token dall&apos;email ricevuta.
               </p>
             </div>
 
@@ -65,25 +64,25 @@ export default function ApplicantLoginPage() {
               className="flex items-center justify-between w-full bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl px-4 py-3.5 mb-6 hover:bg-indigo-100 transition-colors group"
             >
               <div>
-                <p className="font-semibold text-sm">Browse open positions</p>
-                <p className="text-xs text-indigo-500 mt-0.5">Find and apply to a role directly</p>
+                <p className="font-semibold text-sm">Sfoglia le posizioni aperte</p>
+                <p className="text-xs text-indigo-500 mt-0.5">Trova e candidati a un ruolo direttamente</p>
               </div>
               <span className="text-indigo-400 group-hover:translate-x-0.5 transition-transform">→</span>
             </Link>
 
             <div className="relative mb-6">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
-              <div className="relative flex justify-center"><span className="bg-white px-3 text-xs text-slate-400">or use an invite link</span></div>
+              <div className="relative flex justify-center"><span className="bg-white px-3 text-xs text-slate-400">oppure usa un link di invito</span></div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Invite link or token</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Link o token di invito</label>
                 <input
                   type="text"
                   value={token}
                   onChange={e => setToken(e.target.value)}
-                  placeholder="https://… or paste your token"
+                  placeholder="https://… oppure incolla il tuo token"
                   required
                   className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                 />
@@ -100,18 +99,18 @@ export default function ApplicantLoginPage() {
                 disabled={loading}
                 className="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
               >
-                {loading ? 'Checking…' : 'Go to my simulation'}
+                {loading ? 'Verifica in corso…' : 'Vai alla mia simulazione'}
               </button>
             </form>
 
             <div className="mt-6 bg-slate-50 rounded-lg p-4 text-xs text-slate-500 leading-relaxed">
-              <strong className="text-slate-700">Didn&apos;t receive an invite?</strong> Contact the company that sent you the application. Invite links are unique to each candidate.
+              <strong className="text-slate-700">Non hai ricevuto l&apos;invito?</strong> Contatta l&apos;azienda che ti ha inviato la candidatura. I link di invito sono unici per ogni candidato.
             </div>
 
             <p className="text-center text-xs text-slate-400 mt-6">
-              Are you hiring?{' '}
+              Sei un&apos;azienda?{' '}
               <Link href="/login/company" className="text-indigo-600 hover:underline font-medium">
-                Company login
+                Accesso aziende
               </Link>
             </p>
           </div>

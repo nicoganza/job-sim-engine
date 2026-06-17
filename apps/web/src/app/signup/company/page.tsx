@@ -25,12 +25,12 @@ export default function CompanySignupPage() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || 'Registration failed.'); return; }
+      if (!res.ok) { setError(data.error || 'Registrazione non riuscita.'); return; }
       setToken(data.token);
       setUser(data.user);
       router.push('/admin/jobs');
     } catch {
-      setError('Network error — please try again.');
+      setError('Errore di rete — riprova.');
     } finally {
       setLoading(false);
     }
@@ -51,39 +51,39 @@ export default function CompanySignupPage() {
         <div className="w-full max-w-sm">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-slate-900 mb-2">Create your account</h1>
-              <p className="text-slate-500 text-sm">Set up your company and start hiring smarter.</p>
+              <h1 className="text-2xl font-bold text-slate-900 mb-2">Crea il tuo account</h1>
+              <p className="text-slate-500 text-sm">Configura la tua azienda e inizia ad assumere in modo più intelligente.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Company name</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Nome azienda</label>
                 <input
                   type="text"
                   value={form.companyName}
                   onChange={e => set('companyName', e.target.value)}
-                  placeholder="Acme Inc."
+                  placeholder="Acme S.r.l."
                   required
                   className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Your name</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Il tuo nome</label>
                 <input
                   type="text"
                   value={form.name}
                   onChange={e => set('name', e.target.value)}
-                  placeholder="Jane Smith"
+                  placeholder="Mario Rossi"
                   className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Work email</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Email di lavoro</label>
                 <input
                   type="email"
                   value={form.email}
                   onChange={e => set('email', e.target.value)}
-                  placeholder="you@company.com"
+                  placeholder="tu@azienda.com"
                   required
                   className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                 />
@@ -94,7 +94,7 @@ export default function CompanySignupPage() {
                   type="password"
                   value={form.password}
                   onChange={e => set('password', e.target.value)}
-                  placeholder="Min. 8 characters"
+                  placeholder="Min. 8 caratteri"
                   required
                   minLength={8}
                   className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
@@ -112,14 +112,14 @@ export default function CompanySignupPage() {
                 disabled={loading}
                 className="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
               >
-                {loading ? 'Creating account…' : 'Create account'}
+                {loading ? 'Creazione account…' : 'Crea account'}
               </button>
             </form>
 
             <p className="text-center text-xs text-slate-400 mt-6">
-              Already have an account?{' '}
+              Hai già un account?{' '}
               <Link href="/login/company" className="text-indigo-600 hover:underline font-medium">
-                Sign in
+                Accedi
               </Link>
             </p>
           </div>

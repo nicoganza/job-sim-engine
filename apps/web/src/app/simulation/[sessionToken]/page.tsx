@@ -15,8 +15,8 @@ export default function SimulationOverviewPage() {
     api.get<SessionData>(`/api/candidate/sessions/${sessionToken}`).then(setData).finally(() => setLoading(false));
   }, [sessionToken]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-500">Loading...</div>;
-  if (!data) return <div className="min-h-screen flex items-center justify-center text-red-600">Session not found.</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-500">Caricamento...</div>;
+  if (!data) return <div className="min-h-screen flex items-center justify-center text-red-600">Sessione non trovata.</div>;
 
   const { session, steps, submissions } = data;
   const submittedIds = new Set(submissions.filter(s => s.status === 'submitted').map(s => s.stepId));
@@ -25,8 +25,8 @@ export default function SimulationOverviewPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 max-w-lg w-full p-8 space-y-6">
-        <h1 className="text-2xl font-bold">Simulation Overview</h1>
-        <p className="text-gray-600 text-sm">Complete all steps to finish the simulation. Your progress is saved automatically.</p>
+        <h1 className="text-2xl font-bold">Panoramica simulazione</h1>
+        <p className="text-gray-600 text-sm">Completa tutti gli step per terminare la simulazione. Il tuo progresso viene salvato automaticamente.</p>
 
         <div className="space-y-2">
           {steps.sort((a, b) => a.orderIndex - b.orderIndex).map((step, i) => {
@@ -44,7 +44,7 @@ export default function SimulationOverviewPage() {
                 {isCurrent && !done && (
                   <button onClick={() => router.push(`/simulation/${sessionToken}/step/${step.id}`)}
                     className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-medium hover:bg-blue-700">
-                    Start
+                    Inizia
                   </button>
                 )}
               </div>
@@ -54,13 +54,13 @@ export default function SimulationOverviewPage() {
 
         {session.status === 'completed' ? (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-            <p className="font-semibold text-green-700">Simulation Complete!</p>
-            <p className="text-sm text-green-600 mt-1">Thank you. Your responses have been submitted for review.</p>
+            <p className="font-semibold text-green-700">Simulazione completata!</p>
+            <p className="text-sm text-green-600 mt-1">Grazie. Le tue risposte sono state inviate per la revisione.</p>
           </div>
         ) : current ? (
           <button onClick={() => router.push(`/simulation/${sessionToken}/step/${current}`)}
             className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition">
-            Continue →
+            Continua →
           </button>
         ) : null}
       </div>

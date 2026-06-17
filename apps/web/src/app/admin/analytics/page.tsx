@@ -20,26 +20,26 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Analytics</h1>
+      <h1 className="text-2xl font-bold">Analisi</h1>
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Select Job</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Seleziona offerta</label>
         <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-64" value={selectedJob} onChange={e => setSelectedJob(e.target.value)}>
-          <option value="">Choose a job...</option>
+          <option value="">Scegli un&apos;offerta...</option>
           {jobs.map(j => <option key={j.id} value={j.id}>{j.title}</option>)}
         </select>
       </div>
 
       {analytics && (
         <div className="grid grid-cols-3 gap-4">
-          <StatCard label="Total Applicants" value={analytics.totalApplications} />
-          <StatCard label="Completed" value={analytics.completedResults} />
-          <StatCard label="Avg Score" value={analytics.averageScore != null ? `${Math.round(analytics.averageScore)}%` : '—'} />
+          <StatCard label="Candidature totali" value={analytics.totalApplications} />
+          <StatCard label="Completate" value={analytics.completedResults} />
+          <StatCard label="Punteggio medio" value={analytics.averageScore != null ? `${Math.round(analytics.averageScore)}%` : '—'} />
         </div>
       )}
 
       {analytics && Object.keys(recCounts).length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="font-semibold mb-4">Recommendations</h2>
+          <h2 className="font-semibold mb-4">Raccomandazioni</h2>
           <div className="space-y-2">
             {Object.entries(recCounts).map(([rec, count]) => (
               <div key={rec} className="flex items-center gap-3">

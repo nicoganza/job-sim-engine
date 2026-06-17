@@ -13,10 +13,10 @@ export default function LandingPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link href="/jobs" className="text-sm text-slate-600 hover:text-slate-900 font-medium transition-colors px-4 py-2">
-            I&apos;m a candidate
+            Sono un candidato
           </Link>
           <Link href="/login/company" className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors">
-            Company login
+            Accesso aziende
           </Link>
         </div>
       </nav>
@@ -24,20 +24,20 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="flex-1 flex flex-col items-center justify-center text-center px-6 py-24">
         <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-8 uppercase tracking-wide">
-          AI-powered hiring
+          Selezione basata sulle competenze
         </div>
         <h1 className="text-5xl sm:text-6xl font-bold text-slate-900 leading-tight max-w-3xl mb-6">
-          Hire on skill,<br />not just on paper
+          Assumi per competenza,<br />non solo per curriculum
         </h1>
         <p className="text-xl text-slate-500 max-w-xl mb-12 leading-relaxed">
-          Replace take-home assignments with real work simulations. Candidates do the actual job — AI scores the results instantly.
+          Sostituisci i task da svolgere a casa con simulazioni di lavoro reale. I candidati fanno il lavoro vero — l&apos;AI valuta i risultati istantaneamente.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 items-center">
           <Link href="/login/company" className="bg-indigo-600 text-white px-8 py-4 rounded-xl font-semibold text-base hover:bg-indigo-700 transition-colors shadow-sm">
-            Get started — it&apos;s free
+            Inizia gratis
           </Link>
           <Link href="/jobs" className="text-slate-700 px-8 py-4 rounded-xl font-semibold text-base hover:bg-slate-100 transition-colors border border-slate-200">
-            Browse open jobs
+            Sfoglia le posizioni aperte
           </Link>
         </div>
       </section>
@@ -45,24 +45,24 @@ export default function LandingPage() {
       {/* Features */}
       <section className="bg-slate-50 py-24 px-6">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-slate-900 text-center mb-4">Everything you need to assess talent</h2>
-          <p className="text-slate-500 text-center mb-16 max-w-xl mx-auto">Six simulation modules, instant AI scoring, and a full analytics dashboard — all in one platform.</p>
+          <h2 className="text-3xl font-bold text-slate-900 text-center mb-4">Tutto ciò che ti serve per valutare i talenti</h2>
+          <p className="text-slate-500 text-center mb-16 max-w-xl mx-auto">Sei moduli di simulazione, valutazione AI istantanea e una dashboard analitica completa — tutto in un&apos;unica piattaforma.</p>
           <div className="grid sm:grid-cols-3 gap-8">
             {[
               {
                 icon: '🎯',
-                title: 'Real work scenarios',
-                desc: 'Email responses, CRM prioritisation, mock calls, multi-choice assessments and more — built to mimic actual day-to-day tasks.',
+                title: 'Scenari di lavoro reale',
+                desc: 'Risposte email, prioritizzazione CRM, chiamate simulate, quiz a risposta multipla e molto altro — costruiti per replicare le attività quotidiane.',
               },
               {
                 icon: '⚡',
-                title: 'Instant AI scoring',
-                desc: 'Every submission is evaluated automatically against a configurable rubric. No waiting, no manual review for standard tasks.',
+                title: 'Valutazione AI istantanea',
+                desc: 'Ogni risposta viene valutata automaticamente secondo una rubrica configurabile. Nessuna attesa, nessuna revisione manuale per i task standard.',
               },
               {
                 icon: '📊',
-                title: 'Actionable insights',
-                desc: 'See skill scores, red flags, and a hiring recommendation for every candidate the moment they finish.',
+                title: 'Insights azionabili',
+                desc: 'Vedi i punteggi per competenza, i segnali critici e una raccomandazione di assunzione per ogni candidato nel momento in cui finisce.',
               },
             ].map(f => (
               <div key={f.title} className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
@@ -78,12 +78,12 @@ export default function LandingPage() {
       {/* How it works */}
       <section className="py-24 px-6">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-slate-900 text-center mb-16">How it works</h2>
+          <h2 className="text-3xl font-bold text-slate-900 text-center mb-16">Come funziona</h2>
           <div className="space-y-12">
             {[
-              { step: '01', title: 'Create a job posting', desc: 'Add your role details and let AI generate a tailored simulation — or build your own from scratch using our module library.' },
-              { step: '02', title: 'Invite candidates', desc: 'Send a unique link to each candidate. They complete the simulation at their own pace, no account required.' },
-              { step: '03', title: 'Review and decide', desc: 'Each completed simulation shows a score, recommendation, skill breakdown, and full submission transcript.' },
+              { step: '01', title: "Crea un'offerta di lavoro", desc: "Aggiungi i dettagli del ruolo e lascia che l'AI generi una simulazione su misura — oppure costruiscila da zero con la nostra libreria di moduli." },
+              { step: '02', title: 'Invita i candidati', desc: 'Invia un link unico a ogni candidato. Completano la simulazione ai propri ritmi, senza bisogno di registrarsi.' },
+              { step: '03', title: 'Valuta e decidi', desc: 'Ogni simulazione completata mostra un punteggio, una raccomandazione, la suddivisione per competenze e la trascrizione completa.' },
             ].map(item => (
               <div key={item.step} className="flex gap-8 items-start">
                 <div className="text-5xl font-bold text-indigo-100 select-none shrink-0 w-16 text-right leading-none mt-1">{item.step}</div>
@@ -99,10 +99,10 @@ export default function LandingPage() {
 
       {/* CTA band */}
       <section className="bg-indigo-600 py-20 px-6 text-center">
-        <h2 className="text-3xl font-bold text-white mb-4">Ready to hire smarter?</h2>
-        <p className="text-indigo-200 mb-8 max-w-md mx-auto">Set up your first simulation in minutes. No credit card required.</p>
+        <h2 className="text-3xl font-bold text-white mb-4">Pronto ad assumere in modo più intelligente?</h2>
+        <p className="text-indigo-200 mb-8 max-w-md mx-auto">Configura la tua prima simulazione in pochi minuti. Nessuna carta di credito richiesta.</p>
         <Link href="/login/company" className="inline-block bg-white text-indigo-600 font-semibold px-8 py-4 rounded-xl hover:bg-indigo-50 transition-colors">
-          Start for free
+          Inizia gratis
         </Link>
       </section>
 
@@ -114,7 +114,7 @@ export default function LandingPage() {
           </div>
           <span>JobSim</span>
         </div>
-        <span>© {new Date().getFullYear()} JobSim. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} JobSim. Tutti i diritti riservati.</span>
       </footer>
     </div>
   );

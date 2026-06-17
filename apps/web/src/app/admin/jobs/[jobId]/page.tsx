@@ -43,7 +43,7 @@ export default function JobDetailPage() {
     try { await api.post(`/api/jobs/${jobId}/publish`); setMsg('Job published!'); } catch (e: any) { setMsg(e.message); } finally { setPublishing(false); }
   }
 
-  if (!job) return <div className="text-gray-500">Loading...</div>;
+  if (!job) return <div className="text-gray-500">Caricamento...</div>;
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -57,26 +57,26 @@ export default function JobDetailPage() {
       {msg && <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm">{msg}</div>}
 
       <div className="grid grid-cols-2 gap-4">
-        <ActionCard title="Simulation Builder" description="Add, edit, and reorder simulation steps." href={`/admin/jobs/${jobId}/simulation`} btnLabel="Open Builder" />
-        <ActionCard title="Candidates" description="View all candidates and their results." href={`/admin/jobs/${jobId}/candidates`} btnLabel="View Candidates" />
+        <ActionCard title="Costruttore simulazione" description="Aggiungi, modifica e riordina gli step della simulazione." href={`/admin/jobs/${jobId}/simulation`} btnLabel="Apri costruttore" />
+        <ActionCard title="Candidati" description="Vedi tutti i candidati e i loro risultati." href={`/admin/jobs/${jobId}/candidates`} btnLabel="Vedi candidati" />
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <h2 className="font-semibold">AI Simulation Recommendation</h2>
-        <p className="text-sm text-gray-600">Let AI analyze this job posting and recommend simulation steps based on the role requirements.</p>
+        <h2 className="font-semibold">Raccomandazione AI simulazione</h2>
+        <p className="text-sm text-gray-600">Lascia che l&apos;AI analizzi questa offerta e raccomandi gli step di simulazione in base ai requisiti del ruolo.</p>
         <button onClick={generateSimulation} disabled={generating} className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50">
-          {generating ? 'Requesting...' : '✨ Generate Simulation with AI'}
+          {generating ? 'Richiesta in corso...' : '✨ Genera simulazione con AI'}
         </button>
 
         {aiRun && (
           <div className="mt-4 border-t pt-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm font-medium">AI Run Status:</span>
+              <span className="text-sm font-medium">Stato AI:</span>
               <span className={`text-xs px-2 py-0.5 rounded-full ${aiRun.status === 'completed' ? 'bg-green-100 text-green-700' : aiRun.status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{aiRun.status}</span>
             </div>
             {aiRun.status === 'completed' && aiRun.result && (
               <Link href={`/admin/jobs/${jobId}/recommendations/${aiRun.id}`} className="text-purple-600 hover:underline text-sm">
-                → Review AI Recommendations ({aiRun.result.recommendedSteps?.length ?? 0} steps)
+                → Vedi raccomandazioni AI ({aiRun.result.recommendedSteps?.length ?? 0} step)
               </Link>
             )}
           </div>
@@ -85,7 +85,7 @@ export default function JobDetailPage() {
 
       <div className="flex gap-3">
         <button onClick={publishJob} disabled={publishing} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50">
-          {publishing ? 'Publishing...' : 'Publish Job'}
+          {publishing ? 'Pubblicazione...' : 'Pubblica offerta'}
         </button>
       </div>
     </div>

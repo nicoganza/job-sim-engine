@@ -27,19 +27,19 @@ export default function RecommendationsPage() {
     } finally { setAccepting(false); }
   }
 
-  if (!run) return <div className="text-gray-500">Loading...</div>;
+  if (!run) return <div className="text-gray-500">Caricamento...</div>;
   const result = run.result;
 
   return (
     <div className="max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">AI Simulation Recommendation</h1>
+        <h1 className="text-2xl font-bold">Raccomandazione AI simulazione</h1>
         <span className={`text-xs px-3 py-1 rounded-full font-medium ${run.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{run.status}</span>
       </div>
 
       {result?.roleProfile && (
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="font-semibold mb-3">Role Profile</h2>
+          <h2 className="font-semibold mb-3">Profilo del ruolo</h2>
           <div className="grid grid-cols-3 gap-4 text-sm">
             {Object.entries(result.roleProfile).map(([k, v]) => (
               <div key={k}><span className="text-gray-500 capitalize">{k.replace(/([A-Z])/g, ' $1')}: </span><span className="font-medium">{String(v)}</span></div>
@@ -50,19 +50,19 @@ export default function RecommendationsPage() {
 
       {result?.risksAndBiasNotes && result.risksAndBiasNotes.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <h3 className="font-semibold text-amber-800 mb-2">⚠ Risks & Bias Notes</h3>
+          <h3 className="font-semibold text-amber-800 mb-2">⚠ Note su rischi e bias</h3>
           {result.risksAndBiasNotes.map((note, i) => <p key={i} className="text-sm text-amber-700">• {note}</p>)}
         </div>
       )}
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Recommended Steps ({result?.recommendedSteps?.length ?? 0})</h2>
+          <h2 className="font-semibold">Step consigliati ({result?.recommendedSteps?.length ?? 0})</h2>
           <div className="flex gap-3 items-center">
-            <span className="text-sm text-gray-500">{selected.size} selected</span>
+            <span className="text-sm text-gray-500">{selected.size} selezionati</span>
             <button onClick={accept} disabled={accepting || selected.size === 0 || !simId}
               className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50">
-              {accepting ? 'Adding...' : 'Add Selected to Simulation'}
+              {accepting ? 'Aggiunta...' : 'Aggiungi alla simulazione'}
             </button>
           </div>
         </div>

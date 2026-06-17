@@ -7,12 +7,12 @@ type Step = { id: string; orderIndex: number; type: string; title: string; instr
 type Sim = { id: string; title: string; status: string; steps: Step[] };
 
 const MODULE_LABELS: Record<string, string> = {
-  multiple_choice: 'Multiple Choice',
-  free_text: 'Free Text',
-  crm_prioritization: 'CRM Prioritization',
-  notification_reaction: 'Notification Reaction',
-  email_response: 'Email Response',
-  simulated_call: 'Simulated Call',
+  multiple_choice: 'Scelta multipla',
+  free_text: 'Testo libero',
+  crm_prioritization: 'Prioritizzazione CRM',
+  notification_reaction: 'Reazione notifiche',
+  email_response: 'Risposta email',
+  simulated_call: 'Chiamata simulata',
 };
 
 export default function SimulationBuilderPage() {
@@ -54,13 +54,13 @@ export default function SimulationBuilderPage() {
     } catch (e: any) { setMsg(e.message); } finally { setPublishing(false); }
   }
 
-  if (loading) return <div className="text-gray-500">Loading...</div>;
+  if (loading) return <div className="text-gray-500">Caricamento...</div>;
 
   if (!sim) return (
     <div className="text-center py-16">
-      <p className="text-gray-500 mb-4">No simulation yet for this job.</p>
+      <p className="text-gray-500 mb-4">Nessuna simulazione per questa offerta.</p>
       <button onClick={createSim} disabled={creating} className="bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50">
-        {creating ? 'Creating...' : 'Create Simulation'}
+        {creating ? 'Creazione...' : 'Crea simulazione'}
       </button>
     </div>
   );
@@ -71,7 +71,7 @@ export default function SimulationBuilderPage() {
       <div className="w-72 border-r border-gray-200 bg-white flex flex-col">
         <div className="p-4 border-b border-gray-200">
           <h2 className="font-semibold text-sm">{sim.title}</h2>
-          <span className="text-xs text-gray-500">{sim.steps.length} steps · {sim.status}</span>
+          <span className="text-xs text-gray-500">{sim.steps.length} step · {sim.status}</span>
         </div>
         <div className="flex-1 overflow-auto p-2 space-y-1">
           {sim.steps.sort((a, b) => a.orderIndex - b.orderIndex).map(step => (
@@ -83,7 +83,7 @@ export default function SimulationBuilderPage() {
           ))}
         </div>
         <div className="p-3 border-t border-gray-200">
-          <p className="text-xs font-medium text-gray-500 mb-2">Add Step</p>
+          <p className="text-xs font-medium text-gray-500 mb-2">Aggiungi step</p>
           <div className="grid grid-cols-2 gap-1">
             {Object.entries(MODULE_LABELS).map(([type, label]) => (
               <button key={type} onClick={() => addStep(type)}
@@ -105,17 +105,17 @@ export default function SimulationBuilderPage() {
           }} />
         ) : (
           <div className="flex items-center justify-center h-full text-gray-400">
-            Select a step to edit or add a new one.
+            Seleziona uno step da modificare o aggiungine uno nuovo.
           </div>
         )}
       </div>
 
       {/* Right panel - actions */}
       <div className="w-56 border-l border-gray-200 bg-white p-4 flex flex-col gap-3">
-        <h3 className="font-semibold text-sm">Publish</h3>
-        <p className="text-xs text-gray-500">Publishing creates an immutable version. Candidates will use this version.</p>
+        <h3 className="font-semibold text-sm">Pubblica</h3>
+        <p className="text-xs text-gray-500">La pubblicazione crea una versione immutabile. I candidati useranno questa versione.</p>
         <button onClick={publish} disabled={publishing} className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50">
-          {publishing ? 'Publishing...' : '🚀 Publish Version'}
+          {publishing ? 'Pubblicazione...' : '🚀 Pubblica versione'}
         </button>
       </div>
     </div>
@@ -138,22 +138,22 @@ function StepEditor({ step, simId, onSave }: { step: Step; simId: string; onSave
     <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-2xl space-y-4">
       <div className="flex items-center gap-2">
         <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">{step.type}</span>
-        <h3 className="font-semibold">Edit Step</h3>
+        <h3 className="font-semibold">Modifica step</h3>
       </div>
       <div>
-        <label className="text-sm font-medium text-gray-700 block mb-1">Title</label>
+        <label className="text-sm font-medium text-gray-700 block mb-1">Titolo</label>
         <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
       </div>
       <div>
-        <label className="text-sm font-medium text-gray-700 block mb-1">Instructions</label>
+        <label className="text-sm font-medium text-gray-700 block mb-1">Istruzioni</label>
         <textarea className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm min-h-[100px]" value={form.instructions} onChange={e => setForm(f => ({ ...f, instructions: e.target.value }))} />
       </div>
       <div>
-        <label className="text-sm font-medium text-gray-700 block mb-1">Time Limit (seconds)</label>
+        <label className="text-sm font-medium text-gray-700 block mb-1">Limite di tempo (secondi)</label>
         <input type="number" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" value={form.timeLimitSeconds} onChange={e => setForm(f => ({ ...f, timeLimitSeconds: e.target.value }))} />
       </div>
       <button onClick={save} disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
-        {saving ? 'Saving...' : 'Save Changes'}
+        {saving ? 'Salvataggio...' : 'Salva modifiche'}
       </button>
     </div>
   );
