@@ -109,7 +109,7 @@ export default function ApplicantLoginPage() {
 
             <p className="text-center text-xs text-slate-400 mt-6">
               Sei un&apos;azienda?{' '}
-              <Link href="/login/company" className="text-indigo-600 hover:underline font-medium">
+              <Link href="/company/login" className="text-indigo-600 hover:underline font-medium">
                 Accesso aziende
               </Link>
             </p>

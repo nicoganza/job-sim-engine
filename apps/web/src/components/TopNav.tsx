@@ -198,10 +198,10 @@ export default function TopNav() {
             <>
               {pathname.startsWith('/aziende') ? (
                 <>
-                  <Link href="/login/company">
+                  <Link href="/company/login">
                     <Button size="sm" variant="secondary">Accedi</Button>
                   </Link>
-                  <Link href="/login/company?mode=register">
+                  <Link href="/company/login?mode=register">
                     <Button size="sm">Registrati</Button>
                   </Link>
                 </>

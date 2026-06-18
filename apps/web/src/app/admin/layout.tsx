@@ -18,13 +18,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     const u = getUser();
-    if (!u) { router.replace('/login/company'); return; }
+    if (!u) { router.replace('/company/login'); return; }
     setUser(u);
   }, [router]);
 
   function handleLogout() {
     clearToken();
-    router.push('/login/company');
+    router.push('/company/login');
   }
 
   return (

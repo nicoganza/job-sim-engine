@@ -106,7 +106,7 @@ function LoginForm() {
           </p>
           <p className="text-center text-sm text-gray-400 mt-2">
             Sei un'azienda?{' '}
-            <a href="/login/company" className="text-blue-600 font-semibold hover:underline">
+            <a href="/company/login" className="text-blue-600 font-semibold hover:underline">
               Accedi come azienda
             </a>
           </p>

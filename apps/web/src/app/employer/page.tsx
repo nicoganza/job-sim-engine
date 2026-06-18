@@ -15,7 +15,7 @@ export default function EmployerPage() {
           <Link href="/" className="text-sm text-slate-500 hover:text-slate-900 font-medium transition-colors px-3 py-2">
             Per i candidati
           </Link>
-          <Link href="/login/company" className="text-sm text-slate-600 hover:text-slate-900 font-medium transition-colors px-3 py-2">
+          <Link href="/company/login" className="text-sm text-slate-600 hover:text-slate-900 font-medium transition-colors px-3 py-2">
             Accedi
           </Link>
           <Link href="/signup/company" className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors">
@@ -39,7 +39,7 @@ export default function EmployerPage() {
           <Link href="/signup/company" className="bg-indigo-600 text-white px-8 py-4 rounded-xl font-semibold text-base hover:bg-indigo-700 transition-colors shadow-sm">
             Inizia gratis
           </Link>
-          <Link href="/login/company" className="text-slate-700 px-8 py-4 rounded-xl font-semibold text-base hover:bg-slate-100 transition-colors border border-slate-200">
+          <Link href="/company/login" className="text-slate-700 px-8 py-4 rounded-xl font-semibold text-base hover:bg-slate-100 transition-colors border border-slate-200">
             Accedi alla dashboard →
           </Link>
         </div>

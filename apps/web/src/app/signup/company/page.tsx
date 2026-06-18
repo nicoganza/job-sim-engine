@@ -118,7 +118,7 @@ export default function CompanySignupPage() {
 
             <p className="text-center text-xs text-slate-400 mt-6">
               Hai già un account?{' '}
-              <Link href="/login/company" className="text-indigo-600 hover:underline font-medium">
+              <Link href="/company/login" className="text-indigo-600 hover:underline font-medium">
                 Accedi
               </Link>
             </p>

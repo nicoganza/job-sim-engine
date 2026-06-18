@@ -55,7 +55,7 @@ export default function AziendePage() {
               <Link href="/aziende/nuova-offerta">
                 <Button size="lg" iconRight={<ArrowRight size={17} />}>Pubblica un'offerta</Button>
               </Link>
-              <Link href="/login/company">
+              <Link href="/company/login">
                 <Button size="lg" variant="secondary" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,.24)' }}>
                   Accedi
                 </Button>
