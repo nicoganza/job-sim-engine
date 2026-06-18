@@ -2,12 +2,14 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Briefcase, BarChart2, Settings, LogOut, ChevronRight } from 'lucide-react';
 import { getUser, clearToken } from '@/lib/auth';
+import { Avatar } from '@/components/ui';
 
 const navItems = [
-  { href: '/admin/jobs', label: 'Offerte', icon: '💼' },
-  { href: '/admin/analytics', label: 'Analisi', icon: '📊' },
-  { href: '/admin/settings', label: 'Impostazioni', icon: '⚙️' },
+  { href: '/admin/jobs',      label: 'Offerte',        Icon: Briefcase },
+  { href: '/admin/analytics', label: 'Analisi',        Icon: BarChart2 },
+  { href: '/admin/settings',  label: 'Impostazioni',   Icon: Settings  },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -27,59 +29,69 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
-      <aside className="w-60 bg-slate-900 text-white flex flex-col shrink-0">
+    <div className="min-h-screen flex bg-ink-50">
+      {/* Sidebar */}
+      <aside className="w-[220px] bg-ink-950 flex flex-col shrink-0 fixed inset-y-0 left-0 z-40">
         {/* Logo */}
-        <div className="px-5 py-5 border-b border-slate-800">
+        <div className="px-5 h-[68px] flex items-center border-b border-white/[.06]">
           <Link href="/admin/jobs" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center shrink-0">
-              <span className="text-white text-sm font-bold">JS</span>
+            <div className="w-8 h-8 bg-brand rounded-md flex items-center justify-center shrink-0">
+              <span className="text-white text-sm font-bold font-display">M</span>
             </div>
-            <span className="font-semibold text-white text-base">JobSim</span>
+            <span className="font-bold text-[18px] font-display text-white tracking-tight">Mansio</span>
           </Link>
         </div>
 
+        {/* Label */}
+        <div className="px-5 pt-5 pb-2">
+          <span className="text-[11px] font-semibold text-white/30 uppercase tracking-widest">Area aziende</span>
+        </div>
+
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map(item => {
-            const active = pathname.startsWith(item.href);
+        <nav className="flex-1 px-3 pb-4 flex flex-col gap-0.5">
+          {navItems.map(({ href, label, Icon }) => {
+            const active = pathname.startsWith(href);
             return (
               <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                key={href}
+                href={href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[14px] font-medium transition-colors ${
                   active
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    ? 'bg-brand text-white'
+                    : 'text-white/50 hover:text-white hover:bg-white/[.06]'
                 }`}
               >
-                <span className="text-base leading-none">{item.icon}</span>
-                {item.label}
+                <Icon size={16} className="flex-none" />
+                {label}
               </Link>
             );
           })}
         </nav>
 
-        {/* User + logout */}
-        <div className="px-3 py-4 border-t border-slate-800">
+        {/* User */}
+        <div className="px-3 py-4 border-t border-white/[.06]">
           {user && (
-            <div className="px-3 py-2 mb-2">
-              <p className="text-xs text-slate-500 truncate">{user.name || user.email}</p>
-              {user.name && <p className="text-xs text-slate-600 truncate">{user.email}</p>}
+            <div className="flex items-center gap-2.5 px-3 py-2 mb-1">
+              <Avatar name={user.name ?? user.email} size="sm" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-semibold text-white truncate">{user.name ?? user.email}</div>
+                {user.name && <div className="text-[11px] text-white/40 truncate">{user.email}</div>}
+              </div>
             </div>
           )}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[14px] font-medium text-white/40 hover:text-white hover:bg-white/[.06] transition-colors"
           >
-            <span className="text-base leading-none">→</span>
+            <LogOut size={15} className="flex-none" />
             Esci
           </button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto">
-        <div className="max-w-6xl mx-auto px-8 py-8">{children}</div>
+      {/* Main content — offset for fixed sidebar */}
+      <main className="flex-1 ml-[220px] overflow-auto min-h-screen">
+        <div className="max-w-5xl mx-auto px-8 py-8">{children}</div>
       </main>
     </div>
   );

@@ -1,70 +1,166 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Plus, ChevronRight, Briefcase, Users, Zap, Archive } from 'lucide-react';
 import { api } from '@/lib/api';
+import { Button, Badge, Card, Avatar, Stat } from '@/components/ui';
 
-type Job = { id: string; title: string; status: string; department?: string; createdAt: string };
+type Job = {
+  id: string;
+  title: string;
+  status: string;
+  department?: string;
+  location?: string;
+  remotePolicy?: string;
+  employmentType?: string;
+  activeSimulationVersionId?: string;
+  createdAt: string;
+  updatedAt: string;
+};
 
-export default function JobsPage() {
+const STATUS: Record<string, { label: string; tone: 'success' | 'warning' | 'neutral' | 'danger' | 'brand' }> = {
+  published: { label: 'Pubblicata',  tone: 'success'  },
+  draft:     { label: 'Bozza',       tone: 'warning'  },
+  closed:    { label: 'Chiusa',      tone: 'neutral'  },
+  archived:  { label: 'Archiviata', tone: 'danger'   },
+};
+
+const REMOTE: Record<string, string> = {
+  remote: 'Remoto', hybrid: 'Ibrido', onsite: 'In sede',
+};
+
+function timeAgo(dateStr: string) {
+  const d = new Date(dateStr);
+  const diff = Date.now() - d.getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return 'Oggi';
+  if (days === 1) return 'Ieri';
+  if (days < 30) return `${days}g fa`;
+  const months = Math.floor(days / 30);
+  return `${months}m fa`;
+}
+
+export default function AdminJobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get<Job[]>('/api/jobs').then(setJobs).catch(e => setError(e.message)).finally(() => setLoading(false));
+    api.get<Job[]>('/api/jobs')
+      .then(setJobs)
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
-  const statusColor: Record<string, string> = {
-    draft: 'bg-yellow-100 text-yellow-800',
-    published: 'bg-green-100 text-green-800',
-    closed: 'bg-gray-100 text-gray-800',
-    archived: 'bg-red-100 text-red-800',
-  };
+  const published = jobs.filter(j => j.status === 'published').length;
+  const drafts    = jobs.filter(j => j.status === 'draft').length;
+  const withSim   = jobs.filter(j => j.activeSimulationVersionId).length;
+  const archived  = jobs.filter(j => j.status === 'archived').length;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Offerte di lavoro</h1>
-        <Link href="/admin/jobs/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-          + Nuova offerta
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-[28px]">Offerte di lavoro</h1>
+          <p className="text-[15px] text-ink-500 mt-1">Gestisci le posizioni aperte e le simulazioni collegate.</p>
+        </div>
+        <Link href="/admin/jobs/new">
+          <Button iconLeft={<Plus size={16} />}>Nuova offerta</Button>
         </Link>
       </div>
 
-      {loading && <p className="text-gray-500">Caricamento...</p>}
-      {error && <p className="text-red-600">{error}</p>}
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              {['Titolo', 'Dipartimento', 'Stato', 'Creata', 'Azioni'].map(h => (
-                <th key={h} className="text-left px-4 py-3 font-medium text-gray-600">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {jobs.map(job => (
-              <tr key={job.id} className="hover:bg-gray-50 transition">
-                <td className="px-4 py-3 font-medium">{job.title}</td>
-                <td className="px-4 py-3 text-gray-500">{job.department ?? '—'}</td>
-                <td className="px-4 py-3">
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColor[job.status] ?? 'bg-gray-100'}`}>
-                    {job.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-gray-500">{new Date(job.createdAt).toLocaleDateString()}</td>
-                <td className="px-4 py-3 flex gap-2">
-                  <Link href={`/admin/jobs/${job.id}`} className="text-blue-600 hover:underline text-xs">Modifica</Link>
-                  <Link href={`/admin/jobs/${job.id}/candidates`} className="text-gray-600 hover:underline text-xs">Candidati</Link>
-                </td>
-              </tr>
-            ))}
-            {!loading && jobs.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">Nessuna offerta ancora. Creane una.</td></tr>
-            )}
-          </tbody>
-        </table>
+      {/* Stats */}
+      <div className="grid grid-cols-4 gap-4 mb-8">
+        <Card padding="md"><Stat value={String(jobs.length)} label="Totali" /></Card>
+        <Card padding="md"><Stat value={String(published)} label="Pubblicate" /></Card>
+        <Card padding="md"><Stat value={String(drafts)} label="Bozze" /></Card>
+        <Card padding="md"><Stat value={String(withSim)} label="Con simulazione" /></Card>
       </div>
+
+      {/* Job list */}
+      {loading ? (
+        <div className="flex flex-col gap-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="bg-white rounded-xl border border-ink-200 p-5 animate-pulse h-20" />
+          ))}
+        </div>
+      ) : error ? (
+        <Card padding="lg">
+          <p className="text-danger text-[14px]">{error}</p>
+        </Card>
+      ) : jobs.length === 0 ? (
+        <Card padding="lg">
+          <div className="text-center py-10">
+            <div className="w-12 h-12 rounded-full bg-ink-100 flex items-center justify-center mx-auto mb-4">
+              <Briefcase size={22} className="text-ink-400" />
+            </div>
+            <p className="text-ink-500 font-semibold mb-1">Nessuna offerta ancora</p>
+            <p className="text-ink-400 text-[14px] mb-5">Crea la tua prima posizione con simulazione.</p>
+            <Link href="/admin/jobs/new">
+              <Button iconLeft={<Plus size={15} />}>Crea offerta</Button>
+            </Link>
+          </div>
+        </Card>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {jobs.map(job => {
+            const s = STATUS[job.status] ?? { label: job.status, tone: 'neutral' as const };
+            const subtitle = [
+              job.department,
+              job.location,
+              job.remotePolicy ? REMOTE[job.remotePolicy] : undefined,
+            ].filter(Boolean).join(' · ');
+
+            return (
+              <Card key={job.id} padding="md" interactive>
+                <div className="flex items-center gap-4">
+                  <Avatar name={job.title} square size="lg" />
+
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[16px] font-bold text-ink-950 font-display leading-snug">
+                      {job.title}
+                    </div>
+                    <div className="text-[13px] text-ink-500 mt-0.5">
+                      {subtitle || '—'}
+                      {' · '}
+                      {timeAgo(job.updatedAt)}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {job.activeSimulationVersionId && (
+                      <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-brand-subtle rounded-md">
+                        <Zap size={12} className="text-blue-600" />
+                        <span className="text-[12px] text-blue-700 font-semibold">Simulazione</span>
+                      </div>
+                    )}
+                    <Badge tone={s.tone} dot>{s.label}</Badge>
+                  </div>
+
+                  <div className="flex items-center gap-1 ml-2">
+                    <Link
+                      href={`/admin/jobs/${job.id}/candidates`}
+                      onClick={e => e.stopPropagation()}
+                      className="flex items-center gap-1 px-3 py-1.5 text-[13px] font-semibold text-ink-600 hover:bg-ink-100 rounded-lg transition-colors"
+                    >
+                      <Users size={14} />
+                      <span className="hidden sm:inline">Candidati</span>
+                    </Link>
+                    <Link
+                      href={`/admin/jobs/${job.id}`}
+                      className="flex items-center gap-1 px-3 py-1.5 text-[13px] font-semibold text-brand hover:bg-brand-subtle rounded-lg transition-colors"
+                    >
+                      Modifica
+                      <ChevronRight size={14} />
+                    </Link>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
