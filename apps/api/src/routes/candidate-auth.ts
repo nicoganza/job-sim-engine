@@ -101,6 +101,40 @@ router.get('/cv', requireCandidateAuth, async (req: any, res) => {
   res.send(buf);
 });
 
+router.get('/applications', requireCandidateAuth, async (req: any, res) => {
+  // CandidateProfile and Candidate are linked only by email
+  const profile = await prisma.candidateProfile.findUnique({ where: { id: req.candidateProfileId } });
+  if (!profile) { res.status(404).json({ error: 'Not found' }); return; }
+
+  const candidates = await prisma.candidate.findMany({ where: { email: profile.email } });
+  if (candidates.length === 0) { res.json([]); return; }
+
+  const candidateIds = candidates.map(c => c.id);
+  const applications = await prisma.application.findMany({
+    where: { candidateId: { in: candidateIds } },
+    include: {
+      jobPosting: { select: { id: true, title: true, department: true, location: true, remotePolicy: true, employmentType: true } },
+      simulationSessions: {
+        select: { id: true, status: true, completedAt: true, currentStepId: true },
+        orderBy: { startedAt: 'desc' },
+        take: 1,
+      },
+      candidateResults: { select: { totalScore: true, recommendation: true }, take: 1 },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  res.json(applications.map(app => ({
+    id: app.id,
+    status: app.status,
+    createdAt: app.createdAt,
+    updatedAt: app.updatedAt,
+    jobPosting: app.jobPosting,
+    session: app.simulationSessions[0] ?? null,
+    result: app.candidateResults[0] ?? null,
+  })));
+});
+
 function safeProfile(p: any) {
   const { passwordHash, cvData, ...rest } = p;
   return { ...rest, hasCv: !!cvData };
