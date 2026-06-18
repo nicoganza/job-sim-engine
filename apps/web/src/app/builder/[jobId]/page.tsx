@@ -181,7 +181,7 @@ export default function SimulationBuilderPage() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      router.replace(`/login/company?redirect=/simulation/${jobId}`);
+      router.replace(`/login/company?redirect=/builder/${jobId}`);
     }
   }, [jobId, router]);
 

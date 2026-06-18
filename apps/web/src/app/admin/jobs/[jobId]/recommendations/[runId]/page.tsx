@@ -32,7 +32,7 @@ export default function RecommendationsPage() {
     setAccepting(true);
     try {
       await api.post(`/api/ai-recommendation-runs/${runId}/accept`, { simulationId: simId, selectedRecommendationStepIds: [...selected] });
-      window.open(`/simulation/${jobId}`, '_blank');
+      window.open(`/builder/${jobId}`, '_blank');
       router.push(`/admin/jobs/${jobId}`);
     } finally { setAccepting(false); }
   }

@@ -4,3 +4,5 @@ dist
 .env.local
 *.tsbuildinfo
 .turbo
+apps/web/.next/
+apps/web/next-env.d.ts
