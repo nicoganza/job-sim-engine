@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, ChevronRight, Briefcase, Users, Zap, Archive } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Plus, Briefcase, Users, Zap, AlertTriangle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button, Badge, Card, Avatar, Stat } from '@/components/ui';
 
@@ -36,11 +37,11 @@ function timeAgo(dateStr: string) {
   if (days === 0) return 'Oggi';
   if (days === 1) return 'Ieri';
   if (days < 30) return `${days}g fa`;
-  const months = Math.floor(days / 30);
-  return `${months}m fa`;
+  return `${Math.floor(days / 30)}m fa`;
 }
 
 export default function AdminJobsPage() {
+  const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -52,10 +53,10 @@ export default function AdminJobsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const published = jobs.filter(j => j.status === 'published').length;
-  const drafts    = jobs.filter(j => j.status === 'draft').length;
-  const withSim   = jobs.filter(j => j.activeSimulationVersionId).length;
-  const archived  = jobs.filter(j => j.status === 'archived').length;
+  const published  = jobs.filter(j => j.status === 'published').length;
+  const drafts     = jobs.filter(j => j.status === 'draft').length;
+  const withSim    = jobs.filter(j => j.activeSimulationVersionId).length;
+  const missingSim = jobs.filter(j => !j.activeSimulationVersionId && j.status !== 'archived').length;
 
   return (
     <div>
@@ -77,6 +78,16 @@ export default function AdminJobsPage() {
         <Card padding="md"><Stat value={String(drafts)} label="Bozze" /></Card>
         <Card padding="md"><Stat value={String(withSim)} label="Con simulazione" /></Card>
       </div>
+
+      {/* Missing simulation banner */}
+      {missingSim > 0 && (
+        <div className="flex items-center gap-3 bg-warning-subtle border border-warning/20 rounded-xl px-4 py-3 mb-5 text-[13px]">
+          <AlertTriangle size={15} className="text-warning shrink-0" />
+          <span className="text-warning-dark font-medium">
+            {missingSim} {missingSim === 1 ? 'offerta non ha' : 'offerte non hanno'} ancora una simulazione — aggiungila per ricevere candidature qualificate.
+          </span>
+        </div>
+      )}
 
       {/* Job list */}
       {loading ? (
@@ -111,9 +122,15 @@ export default function AdminJobsPage() {
               job.location,
               job.remotePolicy ? REMOTE[job.remotePolicy] : undefined,
             ].filter(Boolean).join(' · ');
+            const hasSim = !!job.activeSimulationVersionId;
 
             return (
-              <Card key={job.id} padding="md" interactive>
+              <Card
+                key={job.id}
+                padding="md"
+                interactive
+                onClick={() => router.push(`/admin/jobs/${job.id}`)}
+              >
                 <div className="flex items-center gap-4">
                   <Avatar name={job.title} square size="lg" />
 
@@ -122,37 +139,34 @@ export default function AdminJobsPage() {
                       {job.title}
                     </div>
                     <div className="text-[13px] text-ink-500 mt-0.5">
-                      {subtitle || '—'}
-                      {' · '}
-                      {timeAgo(job.updatedAt)}
+                      {subtitle || '—'}{' · '}{timeAgo(job.updatedAt)}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    {job.activeSimulationVersionId && (
+                    {hasSim ? (
                       <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-brand-subtle rounded-md">
                         <Zap size={12} className="text-blue-600" />
                         <span className="text-[12px] text-blue-700 font-semibold">Simulazione</span>
+                      </div>
+                    ) : (
+                      <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-warning-subtle rounded-md">
+                        <AlertTriangle size={12} className="text-warning" />
+                        <span className="text-[12px] text-warning-dark font-semibold">Senza simulazione</span>
                       </div>
                     )}
                     <Badge tone={s.tone} dot>{s.label}</Badge>
                   </div>
 
+                  {/* Candidati link — stopPropagation so card click doesn't fire */}
                   <div className="flex items-center gap-1 ml-2">
                     <Link
                       href={`/admin/jobs/${job.id}/candidates`}
                       onClick={e => e.stopPropagation()}
-                      className="flex items-center gap-1 px-3 py-1.5 text-[13px] font-semibold text-ink-600 hover:bg-ink-100 rounded-lg transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold text-ink-600 hover:bg-ink-100 rounded-lg transition-colors"
                     >
                       <Users size={14} />
                       <span className="hidden sm:inline">Candidati</span>
-                    </Link>
-                    <Link
-                      href={`/admin/jobs/${job.id}`}
-                      className="flex items-center gap-1 px-3 py-1.5 text-[13px] font-semibold text-brand hover:bg-brand-subtle rounded-lg transition-colors"
-                    >
-                      Modifica
-                      <ChevronRight size={14} />
                     </Link>
                   </div>
                 </div>
