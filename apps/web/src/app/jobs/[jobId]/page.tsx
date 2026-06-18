@@ -163,7 +163,6 @@ export default function JobDetailPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
-  const [showForm, setShowForm] = useState(false);
   const [simOpen, setSimOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -346,31 +345,16 @@ export default function JobDetailPage() {
                         {applying ? 'Avvio…' : job.activeSimulationVersionId ? 'Inizia la simulazione' : 'Candidati ora'}
                       </Button>
                     </div>
-                  ) : !showForm ? (
+                  ) : (
                     <div className="flex flex-col gap-2.5">
-                      <Button block size="lg" onClick={job.activeSimulationVersionId ? () => setSimOpen(true) : () => setShowForm(true)} iconLeft={job.activeSimulationVersionId ? <Play size={16} /> : undefined}>
+                      <Button block size="lg" iconLeft={job.activeSimulationVersionId ? <Play size={16} /> : undefined}
+                        onClick={() => router.push(`/candidate/login?mode=register&redirect=/jobs/${jobId}`)}>
                         {job.activeSimulationVersionId ? 'Inizia la simulazione' : 'Candidati ora'}
                       </Button>
                       <Link href={`/candidate/login?redirect=/jobs/${jobId}`} className="text-center text-[13px] font-semibold text-ink-500 hover:text-ink-700 transition-colors">
-                        Hai un account? Accedi
+                        Hai già un account? Accedi
                       </Link>
                     </div>
-                  ) : (
-                    <form onSubmit={handleApply} className="flex flex-col gap-3">
-                      <div>
-                        <label className="block text-[14px] font-semibold text-ink-700 mb-1.5">Nome e cognome</label>
-                        <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Mario Rossi" required className="w-full border border-ink-200 rounded-lg px-3.5 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-brand transition" />
-                      </div>
-                      <div>
-                        <label className="block text-[14px] font-semibold text-ink-700 mb-1.5">Email</label>
-                        <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="mario@email.com" required className="w-full border border-ink-200 rounded-lg px-3.5 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-brand transition" />
-                      </div>
-                      {error && <div className="bg-danger-subtle border border-danger/20 text-danger-dark text-[14px] rounded-lg px-4 py-3">{error}</div>}
-                      <div className="flex gap-2 pt-1">
-                        <Button type="button" variant="secondary" onClick={() => setShowForm(false)} className="flex-1">Indietro</Button>
-                        <Button type="submit" disabled={applying} className="flex-1">{applying ? 'Invio…' : 'Invia candidatura'}</Button>
-                      </div>
-                    </form>
                   )}
                 </>
               )}
