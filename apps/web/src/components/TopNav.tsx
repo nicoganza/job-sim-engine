@@ -117,15 +117,23 @@ export default function TopNav() {
   const pathname = usePathname();
   const [authState, setAuthState] = useState<'loading' | 'guest' | 'auth'>('loading');
   const [candidate, setCandidate] = useState<CandidateBasic | null>(null);
+  const [companyUser, setCompanyUser] = useState<{ name?: string; email?: string } | null>(null);
 
   useEffect(() => {
+    // Candidate auth
     const token = localStorage.getItem('candidateToken');
-    if (!token) { setAuthState('guest'); return; }
-    const cached = localStorage.getItem('candidateProfile');
-    if (cached) {
-      try { setCandidate(JSON.parse(cached)); setAuthState('auth'); return; } catch {}
+    if (!token) { setAuthState('guest'); }
+    else {
+      const cached = localStorage.getItem('candidateProfile');
+      if (cached) { try { setCandidate(JSON.parse(cached)); } catch {} }
+      setAuthState('auth');
     }
-    setAuthState('auth');
+    // Company auth
+    const companyToken = localStorage.getItem('token');
+    const companyProfile = localStorage.getItem('user');
+    if (companyToken && companyProfile) {
+      try { setCompanyUser(JSON.parse(companyProfile)); } catch {}
+    }
   }, []);
 
   const isActive = (href: string) =>
@@ -164,12 +172,29 @@ export default function TopNav() {
         </nav>
 
         <div className="ml-auto flex items-center gap-3">
-          <Link
-            href="/aziende"
-            className="text-[14px] font-semibold text-ink-500 hover:text-ink-700 flex items-center gap-1.5 transition-colors"
-          >
-            <Building2 size={16} /> Per le aziende
-          </Link>
+          {companyUser ? (
+            <Link
+              href="/admin/jobs"
+              className="text-[14px] font-semibold text-ink-500 hover:text-ink-700 flex items-center gap-1.5 transition-colors"
+            >
+              <Building2 size={16} /> Dashboard azienda
+            </Link>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/aziende"
+                className="text-[14px] font-semibold text-ink-500 hover:text-ink-700 flex items-center gap-1.5 transition-colors"
+              >
+                <Building2 size={16} /> Per le aziende
+              </Link>
+              <Link
+                href="/login/company"
+                className="text-[13px] text-ink-400 hover:text-ink-600 transition-colors"
+              >
+                Accedi
+              </Link>
+            </div>
+          )}
 
           <div className="w-px h-6 bg-ink-200" />
 

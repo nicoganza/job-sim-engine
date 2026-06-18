@@ -55,9 +55,11 @@ export default function AziendePage() {
               <Link href="/aziende/nuova-offerta">
                 <Button size="lg" iconRight={<ArrowRight size={17} />}>Pubblica un'offerta</Button>
               </Link>
-              <Button size="lg" variant="secondary" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,.24)' }}>
-                Richiedi una demo
-              </Button>
+              <Link href="/login/company">
+                <Button size="lg" variant="secondary" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,.24)' }}>
+                  Accedi
+                </Button>
+              </Link>
             </div>
             <div className="flex gap-9 mt-11">
               {[
