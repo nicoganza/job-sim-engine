@@ -303,7 +303,7 @@ export default function JobDetailPage() {
                     : 'Nessuna simulazione — aggiungila per ricevere candidature qualificate.'}
                 </p>
               </div>
-              <Link href={`/admin/jobs/${jobId}/simulation`} onClick={cancelEdit}>
+              <Link href={`/simulation/${jobId}`} target="_blank" rel="noopener noreferrer" onClick={cancelEdit}>
                 <Button size="sm" variant={job.activeSimulationVersionId ? 'secondary' : 'primary'}>
                   {job.activeSimulationVersionId ? 'Modifica simulazione' : 'Aggiungi simulazione'}
                 </Button>
@@ -374,7 +374,7 @@ export default function JobDetailPage() {
               <Button variant="secondary" size="sm" onClick={startEdit} iconLeft={<Pencil size={14} />}>
                 Modifica
               </Button>
-              <Link href={`/admin/jobs/${jobId}/simulation`}>
+              <Link href={`/simulation/${jobId}`} target="_blank" rel="noopener noreferrer">
                 <Button variant="secondary" size="sm" iconLeft={<Zap size={14} />}>Simulazione</Button>
               </Link>
               <Link href={`/admin/jobs/${jobId}/candidates`}>
@@ -400,7 +400,7 @@ export default function JobDetailPage() {
                   <p className="text-[13px] text-ink-600 mt-0.5">Tutte le offerte devono avere una simulazione per ricevere candidature qualificate.</p>
                 </div>
               </div>
-              <Link href={`/admin/jobs/${jobId}/simulation`} className="flex-none">
+              <Link href={`/simulation/${jobId}`} target="_blank" rel="noopener noreferrer" className="flex-none">
                 <Button size="sm" iconLeft={<Zap size={14} />}>Aggiungi simulazione</Button>
               </Link>
             </div>
@@ -546,7 +546,7 @@ export default function JobDetailPage() {
                     ? 'Simulazione attiva e visibile ai candidati.'
                     : 'Nessuna simulazione ancora — aggiungila per ricevere candidature.'}
                 </p>
-                <Link href={`/admin/jobs/${jobId}/simulation`}>
+                <Link href={`/simulation/${jobId}`} target="_blank" rel="noopener noreferrer">
                   <Button size="sm" variant={job.activeSimulationVersionId ? 'secondary' : 'primary'} block>
                     {job.activeSimulationVersionId ? 'Modifica simulazione' : 'Aggiungi simulazione'}
                   </Button>
