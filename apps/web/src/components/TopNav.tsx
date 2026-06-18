@@ -196,12 +196,25 @@ export default function TopNav() {
 
           {authState === 'guest' && (
             <>
-              <Link href="/candidate/login">
-                <Button size="sm" variant="secondary">Accedi</Button>
-              </Link>
-              <Link href="/candidate/login?mode=register">
-                <Button size="sm">Registrati</Button>
-              </Link>
+              {pathname.startsWith('/aziende') ? (
+                <>
+                  <Link href="/login/company">
+                    <Button size="sm" variant="secondary">Accedi</Button>
+                  </Link>
+                  <Link href="/login/company">
+                    <Button size="sm">Registrati</Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/candidate/login">
+                    <Button size="sm" variant="secondary">Accedi</Button>
+                  </Link>
+                  <Link href="/candidate/login?mode=register">
+                    <Button size="sm">Registrati</Button>
+                  </Link>
+                </>
+              )}
             </>
           )}
 

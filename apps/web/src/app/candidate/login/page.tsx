@@ -95,6 +95,12 @@ function LoginForm() {
               {mode === 'login' ? 'Registrati' : 'Accedi'}
             </button>
           </p>
+          <p className="text-center text-sm text-gray-400 mt-2">
+            Sei un'azienda?{' '}
+            <a href="/login/company" className="text-blue-600 font-semibold hover:underline">
+              Accedi come azienda
+            </a>
+          </p>
         </form>
       </div>
     </div>
