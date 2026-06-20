@@ -86,9 +86,16 @@ function StepEditor({ step, simId, onSave }: { step: Step; simId: string; onSave
     setAiFilling(true);
     setAiError('');
     try {
-      const result = await api.post<{ config: any }>(`/api/simulations/${simId}/steps/${step.id}/ai-fill`, {});
-      setConfig(result.config);
-    } catch (e: any) {
+      const { jobId } = await api.post<{ jobId: string }>(`/api/simulations/${simId}/steps/${step.id}/ai-fill`, {});
+      // Poll until the worker finishes (max ~2 min)
+      for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        const poll = await api.get<{ status: string; config?: any }>(`/api/simulations/${simId}/steps/${step.id}/ai-fill/${jobId}`);
+        if (poll.status === 'completed') { setConfig(poll.config); return; }
+        if (poll.status === 'failed') throw new Error('failed');
+      }
+      throw new Error('timeout');
+    } catch {
       setAiError('Generazione AI fallita — riprova.');
     } finally { setAiFilling(false); }
   }
