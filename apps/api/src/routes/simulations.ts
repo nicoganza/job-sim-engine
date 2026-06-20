@@ -103,7 +103,7 @@ router.post('/:simulationId/steps/:stepId/ai-fill', async (req: AuthRequest, res
 });
 
 router.get('/:simulationId/steps/:stepId/ai-fill/:jobId', async (req: AuthRequest, res) => {
-  const job = await aiFillQueue.getJob(req.params.jobId);
+  const job = await aiFillQueue.getJob(req.params.jobId as string);
   if (!job) { res.status(404).json({ error: 'Job not found' }); return; }
 
   const state = await job.getState();
