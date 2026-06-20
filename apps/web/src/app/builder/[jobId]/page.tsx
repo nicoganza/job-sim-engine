@@ -1,7 +1,7 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Plus, X, GripVertical, ChevronRight, Zap, CheckCircle, Clock, AlignLeft, List, Mail, Phone, LayoutGrid } from 'lucide-react';
+import { Plus, X, GripVertical, ChevronRight, Zap, CheckCircle, Trash2, AlignLeft, List, Mail, Phone, LayoutGrid } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button, Badge, Alert } from '@/components/ui';
 
@@ -150,6 +150,7 @@ export default function SimulationBuilderPage() {
   const [published, setPublished]   = useState(false);
   const [creating, setCreating]     = useState(false);
   const [msg, setMsg]               = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
+  const dragIndex = useRef<number | null>(null);
 
   // Auth check
   useEffect(() => {
@@ -185,6 +186,28 @@ export default function SimulationBuilderPage() {
     });
     setSim(s => s ? { ...s, steps: [...s.steps, step] } : s);
     setSelected(step);
+  }
+
+  async function deleteStep(stepId: string) {
+    if (!sim) return;
+    await api.delete(`/api/simulations/${sim.id}/steps/${stepId}`);
+    setSim(s => s ? { ...s, steps: s.steps.filter(st => st.id !== stepId) } : s);
+    if (selected?.id === stepId) setSelected(null);
+  }
+
+  function handleDragStart(index: number) {
+    dragIndex.current = index;
+  }
+
+  async function handleDrop(targetIndex: number) {
+    if (!sim || dragIndex.current === null || dragIndex.current === targetIndex) return;
+    const reordered = [...sortedSteps];
+    const [moved] = reordered.splice(dragIndex.current, 1);
+    reordered.splice(targetIndex, 0, moved);
+    const withIndex = reordered.map((s, i) => ({ ...s, orderIndex: i }));
+    setSim(s => s ? { ...s, steps: withIndex } : s);
+    dragIndex.current = null;
+    await api.post(`/api/simulations/${sim.id}/steps/reorder`, { stepIds: withIndex.map(s => s.id) });
   }
 
   async function publish() {
@@ -321,24 +344,40 @@ export default function SimulationBuilderPage() {
               const color = MODULE_COLORS[step.type] ?? 'bg-ink-100 text-ink-700';
               const icon = MODULE_ICONS[step.type];
               return (
-                <button
+                <div
                   key={step.id}
-                  type="button"
-                  onClick={() => setSelected(step)}
-                  className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${
+                  draggable
+                  onDragStart={() => handleDragStart(i)}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={() => handleDrop(i)}
+                  className={`group flex items-start gap-2 px-3 py-3 transition-colors cursor-default ${
                     isActive ? 'bg-ink-100' : 'hover:bg-ink-50'
                   }`}
                 >
-                  <span className="text-[11px] font-bold text-ink-400 mt-0.5 w-4 shrink-0">{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-semibold text-ink-900 truncate">{step.title}</div>
+                  <GripVertical size={14} className="text-ink-300 group-hover:text-ink-400 mt-0.5 shrink-0 cursor-grab active:cursor-grabbing" />
+                  <button
+                    type="button"
+                    onClick={() => setSelected(step)}
+                    className="flex-1 text-left min-w-0"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] font-bold text-ink-400 shrink-0">{i + 1}</span>
+                      <div className="text-[13px] font-semibold text-ink-900 truncate">{step.title}</div>
+                    </div>
                     <span className={`inline-flex items-center gap-1 text-[11px] font-semibold mt-1 px-1.5 py-0.5 rounded ${color}`}>
                       {icon}
                       {MODULE_LABELS[step.type] ?? step.type}
                     </span>
-                  </div>
-                  {isActive && <ChevronRight size={13} className="text-ink-400 mt-0.5 shrink-0" />}
-                </button>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteStep(step.id)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-danger-subtle text-ink-400 hover:text-danger shrink-0 mt-0.5"
+                    title="Elimina step"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
               );
             })}
           </div>
