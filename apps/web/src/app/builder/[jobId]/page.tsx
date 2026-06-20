@@ -197,7 +197,7 @@ export default function SimulationBuilderPage() {
     setCreating(true);
     try {
       const s = await api.post<Sim>(`/api/jobs/${jobId}/simulation`, { title: 'Simulazione', description: '' });
-      setSim(s);
+      setSim({ ...s, steps: s.steps ?? [] });
     } finally { setCreating(false); }
   }
 
@@ -231,7 +231,7 @@ export default function SimulationBuilderPage() {
     setTimeout(() => router.back(), 200);
   }
 
-  const sortedSteps = sim?.steps.slice().sort((a, b) => a.orderIndex - b.orderIndex) ?? [];
+  const sortedSteps = (sim?.steps ?? []).slice().sort((a, b) => a.orderIndex - b.orderIndex);
 
   // ─── Loading ───
   if (loading) {
