@@ -8,7 +8,7 @@ import https from 'https';
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   maxRetries: 2,
-  timeout: 25000,
+  timeout: 55000,
   httpAgent: new https.Agent({ keepAlive: true }),
 });
 
@@ -112,7 +112,7 @@ router.post('/:simulationId/steps/:stepId/ai-fill', async (req: AuthRequest, res
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
       temperature: 0.7,

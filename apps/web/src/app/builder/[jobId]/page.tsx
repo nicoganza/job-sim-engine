@@ -64,6 +64,7 @@ function StepEditor({ step, simId, onSave }: { step: Step; simId: string; onSave
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [aiFilling, setAiFilling] = useState(false);
+  const [aiError, setAiError] = useState('');
 
   useEffect(() => {
     setForm({ title: step.title, instructions: step.instructions });
@@ -83,11 +84,12 @@ function StepEditor({ step, simId, onSave }: { step: Step; simId: string; onSave
 
   async function aiFill() {
     setAiFilling(true);
+    setAiError('');
     try {
       const result = await api.post<{ config: any }>(`/api/simulations/${simId}/steps/${step.id}/ai-fill`, {});
       setConfig(result.config);
     } catch (e: any) {
-      // silently fail - user can retry
+      setAiError('Generazione AI fallita — riprova.');
     } finally { setAiFilling(false); }
   }
 
@@ -102,15 +104,18 @@ function StepEditor({ step, simId, onSave }: { step: Step; simId: string; onSave
           {icon}
           {MODULE_LABELS[step.type] ?? step.type}
         </span>
-        <button
-          type="button"
-          onClick={aiFill}
-          disabled={aiFilling}
-          className="flex items-center gap-1.5 text-[12px] font-semibold text-ink-600 border border-ink-200 rounded-lg px-3 py-1.5 hover:bg-ink-50 disabled:opacity-50 transition-colors"
-        >
-          <Sparkles size={13} className={aiFilling ? 'animate-pulse' : ''} />
-          {aiFilling ? 'Generazione AI…' : 'Compila con AI'}
-        </button>
+        <div className="flex items-center gap-2">
+          {aiError && <span className="text-[12px] text-danger">{aiError}</span>}
+          <button
+            type="button"
+            onClick={aiFill}
+            disabled={aiFilling}
+            className="flex items-center gap-1.5 text-[12px] font-semibold text-ink-600 border border-ink-200 rounded-lg px-3 py-1.5 hover:bg-ink-50 disabled:opacity-50 transition-colors"
+          >
+            <Sparkles size={13} className={aiFilling ? 'animate-pulse' : ''} />
+            {aiFilling ? 'Generazione AI…' : 'Compila con AI'}
+          </button>
+        </div>
       </div>
 
       {/* Fields */}
