@@ -25,10 +25,7 @@ const SCHEMAS: Record<string, string> = {
 };
 
 function detectSchemaKey(type: string, existingConfig: any): string {
-  if (type === 'crm_prioritization') {
-    const r = existingConfig?.records?.[0];
-    if (r?.activities || r?.sector || r?.contactEmail || existingConfig?.timeLimitSeconds) return 'crm_prioritization_rich';
-  }
+  if (type === 'crm_prioritization') return 'crm_prioritization_rich';
   if (type === 'notification_reaction') {
     if (existingConfig?.workspace) return 'notification_reaction_slack';
   }

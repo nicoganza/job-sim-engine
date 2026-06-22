@@ -252,9 +252,6 @@ function WelcomeEditor({ config, onChange, errors = new Set<string>() }: { confi
 function CrmEditor({ config, onChange, errors = new Set<string>() }: { config: any; onChange: (c: any) => void; errors?: Set<string> }) {
   const c = config as any;
   const set = (patch: any) => onChange({ ...c, ...patch });
-  const isRich = !!(c.records?.[0]?.activities || c.records?.[0]?.sector || c.records?.[0]?.contactEmail || c.timeLimitSeconds);
-  const [richMode, setRichMode] = useState(isRich);
-  useEffect(() => { setRichMode(!!(c.records?.[0]?.activities || c.records?.[0]?.sector || c.records?.[0]?.contactEmail || c.timeLimitSeconds)); }, [c.timeLimitSeconds, c.records?.[0]?.activities, c.records?.[0]?.sector, c.records?.[0]?.contactEmail]);
 
   function updateRecord(i: number, patch: any) {
     set({ records: c.records.map((x: any, j: number) => j === i ? { ...x, ...patch } : x) });
@@ -262,31 +259,19 @@ function CrmEditor({ config, onChange, errors = new Set<string>() }: { config: a
 
   return (
     <div className="flex flex-col gap-4">
-      <Section title="Modalità">
-        <div className="flex gap-2">
-          <button type="button" onClick={() => { setRichMode(false); const { timeLimitSeconds, maxRankedItems, ...rest } = c; onChange(rest); }}
-            className={`flex-1 py-2 rounded-xl text-[13px] font-semibold border transition ${!richMode ? 'bg-brand text-white border-brand' : 'bg-white text-ink-600 border-ink-200 hover:border-ink-400'}`}>
-            CRM semplice
-          </button>
-          <button type="button" onClick={() => { setRichMode(true); set({ timeLimitSeconds: c.timeLimitSeconds ?? 900, maxRankedItems: c.maxRankedItems ?? 5 }); }}
-            className={`flex-1 py-2 rounded-xl text-[13px] font-semibold border transition ${richMode ? 'bg-brand text-white border-brand' : 'bg-white text-ink-600 border-ink-200 hover:border-ink-400'}`}>
-            CRM ricco (3 colonne)
-          </button>
+      <Section title="Impostazioni">
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Limite di tempo (secondi)">
+            <input type="number" value={c.timeLimitSeconds ?? 900}
+              onChange={e => set({ timeLimitSeconds: Number(e.target.value) })}
+              className="w-full border border-ink-200 rounded-lg px-3 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition" />
+          </Field>
+          <Field label="Max lead da prioritizzare">
+            <input type="number" value={c.maxRankedItems ?? 5}
+              onChange={e => set({ maxRankedItems: Number(e.target.value) })}
+              className="w-full border border-ink-200 rounded-lg px-3 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition" />
+          </Field>
         </div>
-        {richMode && (
-          <div className="grid grid-cols-2 gap-3 mt-2">
-            <Field label="Limite di tempo (secondi)">
-              <input type="number" value={c.timeLimitSeconds ?? 900}
-                onChange={e => set({ timeLimitSeconds: Number(e.target.value) })}
-                className="w-full border border-ink-200 rounded-lg px-3 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition" />
-            </Field>
-            <Field label="Max lead da prioritizzare">
-              <input type="number" value={c.maxRankedItems ?? 5}
-                onChange={e => set({ maxRankedItems: Number(e.target.value) })}
-                className="w-full border border-ink-200 rounded-lg px-3 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition" />
-            </Field>
-          </div>
-        )}
       </Section>
 
       <Section title="Contesto scenario" error={errors.has('scenarioContext') || errors.has('taskPrompt')}>
@@ -317,53 +302,38 @@ function CrmEditor({ config, onChange, errors = new Set<string>() }: { config: a
               <div className="grid grid-cols-2 gap-2">
                 <Field label="Nome contatto"><Inp value={r.displayName ?? ''} onChange={v => updateRecord(i, { displayName: v })} placeholder="Mario Rossi" /></Field>
                 <Field label="Azienda"><Inp value={r.company ?? ''} onChange={v => updateRecord(i, { company: v })} placeholder="Acme Srl" /></Field>
-                {!richMode && <>
-                  <Field label="Valore (€)"><Inp type="number" value={String(r.value ?? '')} onChange={v => updateRecord(i, { value: Number(v) })} placeholder="50000" /></Field>
-                  <Field label="Stage CRM"><Inp value={r.stage ?? ''} onChange={v => updateRecord(i, { stage: v })} placeholder="Negotiation" /></Field>
-                </>}
-              </div>
-              {richMode && (
-                <div className="grid grid-cols-2 gap-2">
-                  <Field label="Ruolo contatto"><Inp value={r.contactRole ?? ''} onChange={v => updateRecord(i, { contactRole: v })} placeholder="Head of Sales" /></Field>
-                  <Field label="Email contatto"><Inp value={r.contactEmail ?? ''} onChange={v => updateRecord(i, { contactEmail: v })} placeholder="mario@acme.com" /></Field>
-                  <Field label="Telefono"><Inp value={r.contactPhone ?? ''} onChange={v => updateRecord(i, { contactPhone: v })} placeholder="+39 02 1234567" /></Field>
-                  <Field label="Settore"><Inp value={r.sector ?? ''} onChange={v => updateRecord(i, { sector: v })} placeholder="SaaS B2B" /></Field>
-                  <Field label="Dipendenti"><Inp value={String(r.employees ?? '')} onChange={v => updateRecord(i, { employees: v })} placeholder="50-200" /></Field>
-                  <Field label="Fatturato"><Inp value={r.revenue ?? ''} onChange={v => updateRecord(i, { revenue: v })} placeholder="€5M ARR" /></Field>
-                  <Field label="Sede"><Inp value={r.location ?? ''} onChange={v => updateRecord(i, { location: v })} placeholder="Milano, Italia" /></Field>
-                  <Field label="Sito"><Inp value={r.website ?? ''} onChange={v => updateRecord(i, { website: v })} placeholder="acme.com" /></Field>
-                  <Field label="Fonte (tipo)"><Inp value={r.source?.type ?? ''} onChange={v => updateRecord(i, { source: { ...(r.source ?? {}), type: v } })} placeholder="Inbound form" /></Field>
-                  <Field label="Fonte (emoji/icona)"><Inp value={r.source?.icon ?? ''} onChange={v => updateRecord(i, { source: { ...(r.source ?? {}), icon: v } })} placeholder="📋" /></Field>
-                  <Field label="Segnale">
-                    <select value={r.signalStrength ?? ''} onChange={e => updateRecord(i, { signalStrength: e.target.value || undefined })}
-                      className="w-full border border-ink-200 rounded-lg px-3 py-1.5 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
-                      <option value="">—</option>
-                      <option value="alto">Alto</option>
-                      <option value="medio">Medio</option>
-                      <option value="basso">Basso</option>
-                    </select>
-                  </Field>
-                  <Field label="Colore avatar (CSS gradient)"><Inp value={r.avatarColor ?? ''} onChange={v => updateRecord(i, { avatarColor: v })} placeholder="linear-gradient(135deg,#6366f1,#7c3aed)" /></Field>
-                </div>
-              )}
-              {richMode && (
-                <div className="flex flex-col gap-2">
-                  <Field label="Attività (una per riga: emoji|testo|data)">
-                    <Textarea value={(r.activities ?? []).map((a: any) => `${a.icon}|${a.text}|${a.date}`).join('\n')} rows={3}
-                      onChange={v => updateRecord(i, { activities: v.split('\n').filter(Boolean).map(line => { const [icon, ...rest] = line.split('|'); const date = rest.pop() ?? ''; const text = rest.join('|'); return { icon: icon.trim(), text: text.trim(), date: date.trim() }; }) })}
-                      placeholder={"🔥|Ha visitato la pricing page 3 volte|2 giorni fa\n📞|Demo richiesta via form|Ieri"} />
-                  </Field>
-                  <Field label="Nota form (citazione diretta del lead)">
-                    <Inp value={r.formNote ?? ''} onChange={v => updateRecord(i, { formNote: v })} placeholder={'"Cerchiamo qualcosa di più strutturato del nostro tool attuale"'} />
-                  </Field>
-                  <ListInput label="Informazioni mancanti" items={r.missingInfo ?? []} onChange={vs => updateRecord(i, { missingInfo: vs })} placeholder="es. Budget non definito" />
-                </div>
-              )}
-              {!richMode && (
-                <Field label="Segnali visibili">
-                  <ListInput label="" items={r.visibleSignals ?? []} onChange={vs => updateRecord(i, { visibleSignals: vs })} placeholder="es. Rinnovo urgente" />
+                <Field label="Ruolo contatto"><Inp value={r.contactRole ?? ''} onChange={v => updateRecord(i, { contactRole: v })} placeholder="Head of Sales" /></Field>
+                <Field label="Email contatto"><Inp value={r.contactEmail ?? ''} onChange={v => updateRecord(i, { contactEmail: v })} placeholder="mario@acme.com" /></Field>
+                <Field label="Telefono"><Inp value={r.contactPhone ?? ''} onChange={v => updateRecord(i, { contactPhone: v })} placeholder="+39 02 1234567" /></Field>
+                <Field label="Settore"><Inp value={r.sector ?? ''} onChange={v => updateRecord(i, { sector: v })} placeholder="SaaS B2B" /></Field>
+                <Field label="Dipendenti"><Inp value={String(r.employees ?? '')} onChange={v => updateRecord(i, { employees: v })} placeholder="50-200" /></Field>
+                <Field label="Fatturato"><Inp value={r.revenue ?? ''} onChange={v => updateRecord(i, { revenue: v })} placeholder="€5M ARR" /></Field>
+                <Field label="Sede"><Inp value={r.location ?? ''} onChange={v => updateRecord(i, { location: v })} placeholder="Milano, Italia" /></Field>
+                <Field label="Sito"><Inp value={r.website ?? ''} onChange={v => updateRecord(i, { website: v })} placeholder="acme.com" /></Field>
+                <Field label="Fonte (tipo)"><Inp value={r.source?.type ?? ''} onChange={v => updateRecord(i, { source: { ...(r.source ?? {}), type: v } })} placeholder="Inbound form" /></Field>
+                <Field label="Fonte (emoji/icona)"><Inp value={r.source?.icon ?? ''} onChange={v => updateRecord(i, { source: { ...(r.source ?? {}), icon: v } })} placeholder="📋" /></Field>
+                <Field label="Segnale">
+                  <select value={r.signalStrength ?? ''} onChange={e => updateRecord(i, { signalStrength: e.target.value || undefined })}
+                    className="w-full border border-ink-200 rounded-lg px-3 py-1.5 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                    <option value="">—</option>
+                    <option value="alto">Alto</option>
+                    <option value="medio">Medio</option>
+                    <option value="basso">Basso</option>
+                  </select>
                 </Field>
-              )}
+                <Field label="Colore avatar (CSS gradient)"><Inp value={r.avatarColor ?? ''} onChange={v => updateRecord(i, { avatarColor: v })} placeholder="linear-gradient(135deg,#6366f1,#7c3aed)" /></Field>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Field label="Attività (una per riga: emoji|testo|data)">
+                  <Textarea value={(r.activities ?? []).map((a: any) => `${a.icon}|${a.text}|${a.date}`).join('\n')} rows={3}
+                    onChange={v => updateRecord(i, { activities: v.split('\n').filter(Boolean).map(line => { const [icon, ...rest] = line.split('|'); const date = rest.pop() ?? ''; const text = rest.join('|'); return { icon: icon.trim(), text: text.trim(), date: date.trim() }; }) })}
+                    placeholder={"🔥|Ha visitato la pricing page 3 volte|2 giorni fa\n📞|Demo richiesta via form|Ieri"} />
+                </Field>
+                <Field label="Nota form (citazione diretta del lead)">
+                  <Inp value={r.formNote ?? ''} onChange={v => updateRecord(i, { formNote: v })} placeholder={'"Cerchiamo qualcosa di più strutturato del nostro tool attuale"'} />
+                </Field>
+                <ListInput label="Informazioni mancanti" items={r.missingInfo ?? []} onChange={vs => updateRecord(i, { missingInfo: vs })} placeholder="es. Budget non definito" />
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <Field label="Priority score (0-100) 🔒">
                   <input type="number" min={0} max={100} value={r.hiddenPriorityScore ?? 50}
@@ -375,7 +345,7 @@ function CrmEditor({ config, onChange, errors = new Set<string>() }: { config: a
             </div>
           ))}
           <button type="button"
-            onClick={() => set({ records: [...(c.records ?? []), { id: uid(), displayName: '', company: '', value: 0, stage: '', notes: [], visibleSignals: [], hiddenPriorityScore: 50, hiddenRationale: '' }] })}
+            onClick={() => set({ records: [...(c.records ?? []), { id: uid(), displayName: '', company: '', notes: [], visibleSignals: [], activities: [], hiddenPriorityScore: 50, hiddenRationale: '' }] })}
             className="flex items-center gap-1.5 text-[12px] text-brand font-semibold hover:underline w-fit">
             <Plus size={12} /> Aggiungi record
           </button>
