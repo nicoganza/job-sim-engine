@@ -1254,8 +1254,15 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-semibold text-gray-900 truncate">{r.displayName}</p>
                     <p className="text-[11px] text-gray-500 truncate">{r.company}{r.contactRole ? ` · ${r.contactRole}` : ''}</p>
-                    {r.sector && <p className="text-[10px] text-gray-400 truncate">{r.sector}{r.employees ? ` · ${r.employees}` : ''}</p>}
-                    {!r.sector && r.source && <p className="text-[10px] text-gray-400">{r.source.icon} {r.source.type}</p>}
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      {r.source && (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-gray-600 bg-gray-100 border border-gray-200 rounded-full px-2 py-0.5 font-medium">
+                          {r.source.icon} {r.source.type}
+                        </span>
+                      )}
+                      {r.location && <span className="text-[10px] text-gray-400">{r.location}</span>}
+                      {r.employees && <span className="text-[10px] text-gray-400">{r.location ? '·' : ''} {r.employees} dip.</span>}
+                    </div>
                     {(r.activities ?? []).length > 0 && (
                       <p className="text-[10px] text-gray-400 truncate mt-0.5">{r.activities[0].icon} {r.activities[0].text}</p>
                     )}
@@ -1276,42 +1283,81 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
           ) : (
             <div className="flex flex-col">
               {/* Header */}
-              <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold" style={{ background: selectedRecord.avatarColor ?? 'linear-gradient(135deg,#6366f1,#7c3aed)' }}>
+              <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+                <div className="flex items-start gap-3 mb-2">
+                  <div className="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[13px] font-bold" style={{ background: selectedRecord.avatarColor ?? 'linear-gradient(135deg,#6366f1,#7c3aed)' }}>
                     {selectedRecord.displayName?.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-bold text-gray-900 truncate">{selectedRecord.displayName}</p>
-                    <p className="text-[11px] text-gray-500 truncate">{selectedRecord.contactRole}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[14px] font-bold text-gray-900 leading-tight">{selectedRecord.displayName}</p>
+                    {selectedRecord.contactRole && <p className="text-[12px] text-gray-500 mt-0.5">{selectedRecord.contactRole}</p>}
                   </div>
                 </div>
-                <p className="text-[13px] font-semibold text-gray-800">{selectedRecord.company}</p>
-                {selectedRecord.sector && <p className="text-[11px] text-gray-500">{selectedRecord.source?.icon} {selectedRecord.source?.type} · {selectedRecord.sector}</p>}
-                <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                  {selectedRecord.contactEmail && <span className="text-[10px] text-gray-500">📧 {selectedRecord.contactEmail}</span>}
-                  {selectedRecord.contactPhone && <span className="text-[10px] text-gray-500">📞 {selectedRecord.contactPhone}</span>}
-                </div>
-                {priorityOrder.includes(selectedRecord.id) && (
-                  <div className="mt-2">
-                    <span className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-blue-500 text-white">
-                      ✓ #{priorityOrder.indexOf(selectedRecord.id) + 1} in lista priorità
+                <p className="text-[13px] font-semibold text-gray-800 mb-2">{selectedRecord.company}</p>
+                {(selectedRecord.source || selectedRecord.sector) && (
+                  <div className="mb-2">
+                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 bg-gray-100 border border-gray-200 rounded-full px-2.5 py-0.5 font-medium">
+                      {selectedRecord.source?.icon} {selectedRecord.source?.type}{selectedRecord.sector ? ` · ${selectedRecord.sector}` : ''}
                     </span>
                   </div>
+                )}
+                {(selectedRecord.contactEmail || selectedRecord.contactPhone || selectedRecord.website) && (
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {selectedRecord.contactEmail && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 bg-white border border-gray-200 rounded-md px-2 py-1 leading-none">
+                        <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        {selectedRecord.contactEmail}
+                      </span>
+                    )}
+                    {selectedRecord.contactPhone && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 bg-white border border-gray-200 rounded-md px-2 py-1 leading-none">
+                        <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .84h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                        {selectedRecord.contactPhone}
+                      </span>
+                    )}
+                    {selectedRecord.website && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 bg-white border border-gray-200 rounded-md px-2 py-1 leading-none">
+                        <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                        {selectedRecord.website}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {priorityOrder.includes(selectedRecord.id) ? (
+                  <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-lg bg-blue-500 text-white">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    #{priorityOrder.indexOf(selectedRecord.id) + 1} in lista priorità
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => togglePriority(selectedRecord.id)}
+                    disabled={priorityOrder.length >= maxItems}
+                    className="flex items-center justify-center gap-1.5 w-full text-[12px] font-semibold px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    + Aggiungi alla priorità
+                  </button>
                 )}
               </div>
 
               {/* Collapsible sections */}
               {[
                 { key: 'info', title: 'Informazioni azienda', content: (
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px]">
-                    {[['Settore', selectedRecord.sector], ['Dipendenti', selectedRecord.employees], ['Fatturato', selectedRecord.revenue], ['Sede', selectedRecord.location], ['Fondazione', selectedRecord.founded], ['Sito', selectedRecord.website]].map(([l, v]) => v ? (
-                      <div key={l as string}><p className="text-gray-400 font-semibold">{l}</p><p className="text-gray-700">{String(v)}</p></div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                    {[['SETTORE', selectedRecord.sector], ['DIPENDENTI', selectedRecord.employees], ['FATTURATO', selectedRecord.revenue], ['SEDE', selectedRecord.location], ['ANNO FONDAZIONE', selectedRecord.founded?.toString()], ['SITO WEB', selectedRecord.website]].map(([l, v]) => v ? (
+                      <div key={l as string}>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">{l}</p>
+                        <p className="text-[12px] text-gray-800 font-medium">{String(v)}</p>
+                      </div>
                     ) : null)}
                     {(selectedRecord.missingInfo ?? []).length > 0 && (
-                      <div className="col-span-2 mt-1 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
-                        <p className="text-[10px] font-bold text-yellow-700 mb-1">Informazioni mancanti</p>
-                        {(selectedRecord.missingInfo ?? []).map((m: string, i: number) => <p key={i} className="text-[10px] text-yellow-600">• {m}</p>)}
+                      <div className="col-span-2 mt-1 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                        <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-1.5">Informazioni mancanti</p>
+                        {(selectedRecord.missingInfo ?? []).map((m: string, i: number) => (
+                          <div key={i} className="flex items-start gap-1.5 mb-0.5">
+                            <svg className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                            <p className="text-[11px] text-amber-700">{m}</p>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
