@@ -1061,6 +1061,8 @@ function SlackWorkspaceRenderer({ config, answer, onChange }: any) {
 
 // ─── Rich CRM Renderer (3-column fullscreen) ──────────────────────────────────
 function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, submitting }: any) {
+  // eslint-disable-next-line no-console
+  console.log('[CRM debug] records[0]:', JSON.stringify(config?.records?.[0])?.slice(0, 400));
   const records: any[] = config.records ?? [];
   // Always allow ranking all leads
   const maxItems: number = records.length;
