@@ -14,6 +14,30 @@ const CrmRecordSchema = z.object({
   visibleSignals: z.array(z.string()).default([]),
   hiddenPriorityScore: z.number(),
   hiddenRationale: z.string(),
+  // Rich lead fields (optional — used in full CRM UI mode)
+  contactRole: z.string().optional(),
+  contactEmail: z.string().optional(),
+  contactPhone: z.string().optional(),
+  sector: z.string().optional(),
+  employees: z.union([z.number(), z.string()]).optional(),
+  revenue: z.string().optional(),
+  location: z.string().optional(),
+  founded: z.number().optional(),
+  website: z.string().optional(),
+  source: z.object({ type: z.string(), icon: z.string() }).optional(),
+  signalStrength: z.enum(['alto', 'medio', 'basso']).optional(),
+  avatarColor: z.string().optional(),
+  activities: z.array(z.object({
+    icon: z.string(),
+    text: z.string(),
+    date: z.string(),
+  })).optional(),
+  formNote: z.string().nullable().optional(),
+  interactions: z.array(z.object({
+    text: z.string(),
+    date: z.string(),
+  })).optional(),
+  missingInfo: z.array(z.string()).optional(),
 });
 
 const ConfigSchema = z.object({
@@ -23,6 +47,7 @@ const ConfigSchema = z.object({
   maxRankedItems: z.number().optional(),
   requiredExplanation: z.boolean().default(true),
   expectedTopRecordIds: z.array(z.string()),
+  timeLimitSeconds: z.number().optional(),
   scoringWeights: z.object({
     topChoiceAccuracy: z.number(),
     rankingQuality: z.number(),
@@ -34,6 +59,7 @@ const ConfigSchema = z.object({
 const AnswerSchema = z.object({
   orderedRecordIds: z.array(z.string()),
   explanation: z.string().optional(),
+  leadNotes: z.record(z.string()).optional(),
 });
 
 type Config = z.infer<typeof ConfigSchema>;
@@ -57,7 +83,7 @@ function computeRankingScore(expected: string[], actual: string[]): number {
 export const crmPrioritizationModule: SimulationModule<Config, Answer> = {
   type: 'crm_prioritization',
   label: 'CRM Prioritization',
-  description: 'Candidate ranks CRM records by business priority and explains reasoning.',
+  description: 'Candidate ranks CRM records / leads by business priority and explains reasoning.',
 
   configSchema: ConfigSchema,
   answerSchema: AnswerSchema,
@@ -79,9 +105,27 @@ export const crmPrioritizationModule: SimulationModule<Config, Answer> = {
         healthScore: r.healthScore,
         notes: r.notes,
         visibleSignals: r.visibleSignals,
+        // Rich fields (public — no hidden scoring info)
+        contactRole: r.contactRole,
+        contactEmail: r.contactEmail,
+        contactPhone: r.contactPhone,
+        sector: r.sector,
+        employees: r.employees,
+        revenue: r.revenue,
+        location: r.location,
+        founded: r.founded,
+        website: r.website,
+        source: r.source,
+        signalStrength: r.signalStrength,
+        avatarColor: r.avatarColor,
+        activities: r.activities,
+        formNote: r.formNote,
+        interactions: r.interactions,
+        missingInfo: r.missingInfo,
       })),
       maxRankedItems: config.maxRankedItems,
       requiredExplanation: config.requiredExplanation,
+      timeLimitSeconds: config.timeLimitSeconds,
     };
   },
 
@@ -92,9 +136,8 @@ export const crmPrioritizationModule: SimulationModule<Config, Answer> = {
     const rankScore = computeRankingScore(config.expectedTopRecordIds, answer.orderedRecordIds);
     const topChoiceCorrect = answer.orderedRecordIds[0] === config.expectedTopRecordIds[0];
     const topChoiceScore = topChoiceCorrect ? 100 : answer.orderedRecordIds.some(id => config.expectedTopRecordIds.slice(0, 2).includes(id)) ? 50 : 0;
-    const explanationScore = answer.explanation && answer.explanation.length > 50 ? 70 : 30; // placeholder, gets AI score in worker
+    const explanationScore = answer.explanation && answer.explanation.length > 50 ? 70 : 30;
 
-    // Check for critical missed records
     const highPriorityMissed = config.expectedTopRecordIds.slice(0, 2).filter(id => !answer.orderedRecordIds.includes(id));
     const redFlags = highPriorityMissed.length > 0 ? [{ key: 'missed_critical_record', severity: 'high' as const, message: `Missed ${highPriorityMissed.length} high-priority record(s)` }] : [];
 

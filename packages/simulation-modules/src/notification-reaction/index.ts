@@ -16,37 +16,77 @@ const NotificationSchema = z.object({
   hiddenRationale: z.string(),
 });
 
+const TeamMemberSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  initials: z.string().optional(),
+  color: z.string().optional(),
+  role: z.string(),
+  aiPersonality: z.string().optional(),
+  aiRules: z.array(z.string()).optional(),
+});
+
+const WelcomeMessageSchema = z.object({
+  memberId: z.string(),
+  text: z.string(),
+  channel: z.string().default('welcome'),
+  delayMs: z.number().optional(),
+});
+
+const ChannelSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  topic: z.string().default(''),
+});
+
 const ConfigSchema = z.object({
   scenarioContext: z.string(),
   taskPrompt: z.string(),
-  notifications: z.array(NotificationSchema),
-  allowedActions: z.array(z.enum(['reply', 'ignore', 'escalate', 'schedule_followup', 'create_task', 'ask_clarification'])),
+  notifications: z.array(NotificationSchema).optional().default([]),
+  allowedActions: z.array(z.enum(['reply', 'ignore', 'escalate', 'schedule_followup', 'create_task', 'ask_clarification'])).optional().default(['reply', 'ignore', 'escalate']),
   scoringWeights: z.object({
     actionChoice: z.number(),
     prioritization: z.number(),
     communication: z.number(),
     escalationJudgment: z.number(),
-  }),
+  }).optional().default({ actionChoice: 0.4, prioritization: 0.3, communication: 0.2, escalationJudgment: 0.1 }),
+  // Slack workspace mode
+  workspace: z.object({
+    name: z.string(),
+    logoUrl: z.string().optional(),
+  }).optional(),
+  channels: z.array(ChannelSchema).optional(),
+  teamMembers: z.array(TeamMemberSchema).optional(),
+  welcomeSequence: z.array(WelcomeMessageSchema).optional(),
+  ctaLabel: z.string().optional(),
+  ctaChannel: z.string().optional(),
+  maxRepliesPerChannel: z.number().optional().default(3),
 });
 
-const AnswerSchema = z.object({
-  actions: z.array(z.object({
-    notificationId: z.string(),
-    actionType: z.string(),
-    responseText: z.string().optional(),
-    priorityRank: z.number().optional(),
-  })),
-  overallExplanation: z.string().optional(),
-});
+const AnswerSchema = z.union([
+  z.object({
+    actions: z.array(z.object({
+      notificationId: z.string(),
+      actionType: z.string(),
+      responseText: z.string().optional(),
+      priorityRank: z.number().optional(),
+    })),
+    overallExplanation: z.string().optional(),
+  }),
+  z.object({
+    acknowledged: z.boolean(),
+    timeSpentSeconds: z.number(),
+    messagesSent: z.number().optional(),
+  }),
+]);
 
 type Config = z.infer<typeof ConfigSchema>;
 type Answer = z.infer<typeof AnswerSchema>;
 
-
 export const notificationReactionModule: SimulationModule<Config, Answer> = {
   type: 'notification_reaction',
   label: 'Notification Reaction',
-  description: 'Candidate handles incoming notifications and chooses appropriate actions.',
+  description: 'Candidate handles incoming notifications or explores a Slack-like workspace.',
 
   configSchema: ConfigSchema,
   answerSchema: AnswerSchema,
@@ -55,31 +95,69 @@ export const notificationReactionModule: SimulationModule<Config, Answer> = {
   validateAnswer: (a) => validate(AnswerSchema, a),
 
   getPublicCandidateConfig(config: Config) {
-    return {
+    const base = {
       scenarioContext: config.scenarioContext,
       taskPrompt: config.taskPrompt,
-      notifications: config.notifications.map(n => ({
-        id: n.id,
-        senderName: n.senderName,
-        senderRole: n.senderRole,
-        channel: n.channel,
-        timestampOffsetMinutes: n.timestampOffsetMinutes,
-        message: n.message,
-        visibleMetadata: n.visibleMetadata,
-      })),
       allowedActions: config.allowedActions,
+    };
+
+    if (config.workspace) {
+      return {
+        ...base,
+        workspace: config.workspace,
+        channels: config.channels,
+        teamMembers: config.teamMembers?.map(m => ({
+          id: m.id, name: m.name, initials: m.initials, color: m.color, role: m.role,
+          // aiPersonality and aiRules are kept server-side for chat endpoint
+        })),
+        welcomeSequence: config.welcomeSequence,
+        ctaLabel: config.ctaLabel,
+        ctaChannel: config.ctaChannel,
+        maxRepliesPerChannel: config.maxRepliesPerChannel,
+      };
+    }
+
+    return {
+      ...base,
+      notifications: (config.notifications ?? []).map(n => ({
+        id: n.id, senderName: n.senderName, senderRole: n.senderRole, channel: n.channel,
+        timestampOffsetMinutes: n.timestampOffsetMinutes, message: n.message, visibleMetadata: n.visibleMetadata,
+      })),
     };
   },
 
   async score(input: ModuleScoringInput<Config, Answer>): Promise<StepScore> {
     const { config, answer } = input;
-    const actionMap = new Map(answer.actions.map(a => [a.notificationId, a]));
 
+    // Slack workspace mode: score by engagement
+    if ('acknowledged' in answer) {
+      const spent = answer.timeSpentSeconds ?? 0;
+      const msgs = answer.messagesSent ?? 0;
+      const engScore = Math.min(100, Math.round(spent / 3) + msgs * 5);
+      return {
+        stepId: input.sessionContext.sessionId,
+        stepType: 'notification_reaction',
+        totalScore: engScore,
+        maxScore: 100,
+        criteria: [
+          { key: 'workspace_engagement', label: 'Workspace engagement', score: engScore, maxScore: 100, evidence: `${spent}s, ${msgs} messages sent` },
+        ],
+        skillScores: [],
+        redFlags: [],
+        summary: `Workspace explored for ${spent}s with ${msgs} messages sent.`,
+        scoringMode: 'algorithmic',
+        confidence: 0.8,
+        needsManualReview: false,
+      };
+    }
+
+    // Standard notification mode
+    const actionMap = new Map(answer.actions.map(a => [a.notificationId, a]));
     let actionScore = 0;
     let totalPossible = 0;
     const redFlags: StepScore['redFlags'] = [];
 
-    for (const notif of config.notifications) {
+    for (const notif of (config.notifications ?? [])) {
       const action = actionMap.get(notif.id);
       const expected = notif.expectedActionTypes;
       totalPossible += notif.hiddenUrgency;
