@@ -1243,12 +1243,15 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
               return (
                 <div
                   key={i}
+                  draggable={!!lead}
+                  onDragStart={lead ? e => { e.dataTransfer.setData('text/plain', lead.id); setDraggingId(lead.id); } : undefined}
+                  onDragEnd={lead ? () => { setDraggingId(null); setDragOverSlot(null); } : undefined}
                   onDragOver={e => { e.preventDefault(); setDragOverSlot(i); }}
                   onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverSlot(null); }}
                   onDrop={e => { e.preventDefault(); handleDropOnSlot(i); }}
                   className={`rounded-lg border px-2 py-1.5 transition-colors ${
                     isOver ? 'border-blue-400 bg-blue-100' :
-                    lead ? 'border-blue-200 bg-blue-50' :
+                    lead ? `border-blue-200 bg-blue-50 ${draggingId === lead.id ? 'opacity-40' : 'cursor-grab active:cursor-grabbing'}` :
                     'border-dashed border-gray-200 bg-white'
                   }`}
                 >
