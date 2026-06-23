@@ -1074,13 +1074,13 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
   const [timeLeft, setTimeLeft] = useState(timerSecs);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
-  // Auto-expand all sections when a new lead is selected
+  // Auto-expand only the first section when a new lead is selected
   useEffect(() => {
     if (!selectedId) return;
     setExpandedSections(prev => {
-      const patch: Record<string, boolean> = {};
-      SECTION_KEYS.forEach(k => { if (prev[`${selectedId}-${k}`] === undefined) patch[`${selectedId}-${k}`] = true; });
-      return Object.keys(patch).length ? { ...prev, ...patch } : prev;
+      const firstKey = `${selectedId}-${SECTION_KEYS[0]}`;
+      if (prev[firstKey] !== undefined) return prev;
+      return { ...prev, [firstKey]: true };
     });
   }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
 
