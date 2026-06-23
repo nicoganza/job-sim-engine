@@ -123,7 +123,9 @@ router.get('/sessions/:sessionToken/steps/:stepId', async (req, res) => {
   // Temporary debug: log CRM config to diagnose empty sections
   if (step.type === 'crm_prioritization') {
     const cfg = step.config as any;
-    console.log(`[DEBUG CRM] versionId=${session.simulationVersionId} records=${cfg?.records?.length ?? 0} firstRecord=${JSON.stringify(cfg?.records?.[0])?.slice(0, 300)}`);
+    const pubCfg = mod.getPublicCandidateConfig(step.config) as any;
+    console.log(`[DEBUG CRM raw] records=${cfg?.records?.length ?? 0} firstRecord=${JSON.stringify(cfg?.records?.[0])?.slice(0, 200)}`);
+    console.log(`[DEBUG CRM pub] firstRecord=${JSON.stringify(pubCfg?.records?.[0])?.slice(0, 200)}`);
   }
 
   res.json({
