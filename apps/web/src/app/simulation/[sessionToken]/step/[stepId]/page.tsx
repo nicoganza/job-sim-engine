@@ -1066,12 +1066,23 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
   const maxItems: number = records.length;
   const timerSecs: number = config.timeLimitSeconds ?? 900;
 
+  const SECTION_KEYS = ['info', 'signals', 'interactions', 'notes'];
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [priorityOrder, setPriorityOrder] = useState<string[]>(answer?.orderedRecordIds ?? []);
   const [explanation, setExplanation] = useState(answer?.explanation ?? '');
   const [notes, setNotes] = useState<Record<string, string>>(answer?.leadNotes ?? {});
   const [timeLeft, setTimeLeft] = useState(timerSecs);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+
+  // Auto-expand all sections when a new lead is selected
+  useEffect(() => {
+    if (!selectedId) return;
+    setExpandedSections(prev => {
+      const patch: Record<string, boolean> = {};
+      SECTION_KEYS.forEach(k => { if (prev[`${selectedId}-${k}`] === undefined) patch[`${selectedId}-${k}`] = true; });
+      return Object.keys(patch).length ? { ...prev, ...patch } : prev;
+    });
+  }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -1193,8 +1204,12 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-semibold text-gray-900 truncate">{r.displayName}</p>
-                    <p className="text-[11px] text-gray-500 truncate">{r.company}</p>
-                    {r.source && <p className="text-[10px] text-gray-400">{r.source.icon} {r.source.type}</p>}
+                    <p className="text-[11px] text-gray-500 truncate">{r.company}{r.contactRole ? ` · ${r.contactRole}` : ''}</p>
+                    {r.sector && <p className="text-[10px] text-gray-400 truncate">{r.sector}{r.employees ? ` · ${r.employees}` : ''}</p>}
+                    {!r.sector && r.source && <p className="text-[10px] text-gray-400">{r.source.icon} {r.source.type}</p>}
+                    {(r.activities ?? []).length > 0 && (
+                      <p className="text-[10px] text-gray-400 truncate mt-0.5">{r.activities[0].icon} {r.activities[0].text}</p>
+                    )}
                   </div>
                   {r.signalStrength && (
                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${r.signalStrength === 'alto' ? 'bg-green-100 text-green-700' : r.signalStrength === 'medio' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'}`}>
