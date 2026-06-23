@@ -161,7 +161,14 @@ function StepEditor({ step, simId, onSave, onConfigChange, errors = [] }: { step
       for (let i = 0; i < 60; i++) {
         await new Promise(r => setTimeout(r, 2000));
         const poll = await api.get<{ status: string; config?: any }>(`/api/simulations/${simId}/steps/${step.id}/ai-fill/${jobId}`);
-        if (poll.status === 'completed') { setConfig(poll.config); onConfigChange?.(step.id, poll.config); return; }
+        if (poll.status === 'completed') {
+          setConfig(poll.config);
+          onConfigChange?.(step.id, poll.config);
+          // Auto-save to DB so sim.steps stays in sync and re-selecting this step doesn't lose data
+          await api.patch(`/api/simulations/${simId}/steps/${step.id}`, { config: poll.config });
+          onSave({ ...step, config: poll.config });
+          return;
+        }
         if (poll.status === 'failed') throw new Error('failed');
       }
       throw new Error('timeout');
