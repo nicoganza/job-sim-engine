@@ -125,7 +125,7 @@ function getDefaultConfig(type: string): Record<string, unknown> {
   return (defaults[type] ?? {}) as Record<string, unknown>;
 }
 
-function StepEditor({ step, simId, onSave, errors = [] }: { step: Step; simId: string; onSave: (s: Step) => void; errors?: string[] }) {
+function StepEditor({ step, simId, onSave, onConfigChange, errors = [] }: { step: Step; simId: string; onSave: (s: Step) => void; onConfigChange?: (stepId: string, cfg: any) => void; errors?: string[] }) {
   const [form, setForm] = useState({ title: step.title, instructions: step.instructions });
   const [config, setConfig] = useState<any>(step.config ?? {});
   const [saving, setSaving] = useState(false);
@@ -136,9 +136,11 @@ function StepEditor({ step, simId, onSave, errors = [] }: { step: Step; simId: s
 
   useEffect(() => {
     setForm({ title: step.title, instructions: step.instructions });
-    setConfig(step.config ?? {});
+    const initial = step.config ?? {};
+    setConfig(initial);
+    onConfigChange?.(step.id, initial);
     setSaved(false);
-  }, [step.id]);
+  }, [step.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function save() {
     setSaving(true);
@@ -159,7 +161,7 @@ function StepEditor({ step, simId, onSave, errors = [] }: { step: Step; simId: s
       for (let i = 0; i < 60; i++) {
         await new Promise(r => setTimeout(r, 2000));
         const poll = await api.get<{ status: string; config?: any }>(`/api/simulations/${simId}/steps/${step.id}/ai-fill/${jobId}`);
-        if (poll.status === 'completed') { setConfig(poll.config); return; }
+        if (poll.status === 'completed') { setConfig(poll.config); onConfigChange?.(step.id, poll.config); return; }
         if (poll.status === 'failed') throw new Error('failed');
       }
       throw new Error('timeout');
@@ -223,7 +225,7 @@ function StepEditor({ step, simId, onSave, errors = [] }: { step: Step; simId: s
             <span className="text-[11px] font-bold text-ink-400 uppercase tracking-widest">Configurazione step</span>
             <div className="h-px flex-1 bg-ink-100" />
           </div>
-          <ConfigEditor type={step.type} config={config} onChange={setConfig} errors={localErrors} />
+          <ConfigEditor type={step.type} config={config} onChange={cfg => { setConfig(cfg); onConfigChange?.(step.id, cfg); }} errors={localErrors} />
         </div>
       </div>
 
@@ -255,6 +257,7 @@ export default function SimulationBuilderPage() {
   const [creating, setCreating]     = useState(false);
   const [msg, setMsg]               = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
   const [stepErrors, setStepErrors] = useState<Record<string, string[]>>({});
+  const liveConfigsRef = useRef<Record<string, any>>({});
   const dragIndex = useRef<number | null>(null);
 
   // Auth check
@@ -317,10 +320,11 @@ export default function SimulationBuilderPage() {
 
   async function publish() {
     if (!sim) return;
-    // Client-side validation first
+    // Client-side validation — use live (possibly unsaved) config when available
     const allErrors: Record<string, string[]> = {};
     for (const step of sortedSteps) {
-      const errs = validateStepConfig(step.type, step.config ?? {});
+      const cfg = liveConfigsRef.current[step.id] ?? step.config ?? {};
+      const errs = validateStepConfig(step.type, cfg);
       if (errs.length) allErrors[step.id] = errs;
     }
     if (Object.keys(allErrors).length > 0) {
@@ -539,6 +543,7 @@ export default function SimulationBuilderPage() {
               step={selected}
               simId={sim.id}
               errors={stepErrors[selected.id] ?? []}
+              onConfigChange={(stepId, cfg) => { liveConfigsRef.current[stepId] = cfg; }}
               onSave={updated => {
                 setSim(s => s ? { ...s, steps: s.steps.map(st => st.id === updated.id ? updated : st) } : s);
                 setSelected(updated);
