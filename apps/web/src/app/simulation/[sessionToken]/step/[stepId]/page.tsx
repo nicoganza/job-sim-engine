@@ -1108,9 +1108,18 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
     onChange({ orderedRecordIds: order, explanation: expl, leadNotes: ns });
   }
 
-  function togglePriority(id: string) {
+  function togglePriority(id: string, method: 'button' | 'remove' = 'button') {
     setPriorityOrder(prev => {
-      const next = prev.includes(id) ? prev.filter(x => x !== id) : prev.length < maxItems ? [...prev, id] : prev;
+      const isIn = prev.includes(id);
+      const next = isIn ? prev.filter(x => x !== id) : prev.length < maxItems ? [...prev, id] : prev;
+      if (next !== prev) {
+        const lead = records.find(r => r.id === id);
+        if (isIn) {
+          onTrackEvent?.('crm_lead_unranked', { leadId: id, company: lead?.company, fromPosition: prev.indexOf(id) + 1 });
+        } else {
+          onTrackEvent?.('crm_lead_ranked', { leadId: id, company: lead?.company, position: next.length, method });
+        }
+      }
       emitAnswer(next, explanation, notes);
       return next;
     });
@@ -1118,10 +1127,17 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
 
   function handleDropOnSlot(slotIndex: number) {
     if (!draggingId) return;
+    const lead = records.find(r => r.id === draggingId);
     setPriorityOrder(prev => {
+      const prevPos = prev.indexOf(draggingId!);
       const without = prev.filter(id => id !== draggingId);
       without.splice(slotIndex, 0, draggingId!);
       const trimmed = without.slice(0, maxItems);
+      if (prevPos === -1) {
+        onTrackEvent?.('crm_lead_ranked', { leadId: draggingId, company: lead?.company, position: slotIndex + 1, method: 'drag' });
+      } else if (prevPos !== slotIndex) {
+        onTrackEvent?.('crm_lead_reordered', { leadId: draggingId, company: lead?.company, fromPosition: prevPos + 1, toPosition: slotIndex + 1 });
+      }
       emitAnswer(trimmed, explanation, notes);
       return trimmed;
     });
@@ -1130,7 +1146,10 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
   }
 
   function toggleSection(key: string) {
-    setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+    const willExpand = !expandedSections[key];
+    setExpandedSections(prev => ({ ...prev, [key]: willExpand }));
+    const section = key.split('-').slice(1).join('-');
+    onTrackEvent?.(`crm_section_${willExpand ? 'opened' : 'closed'}`, { leadId: selectedId, section });
   }
 
   const selectedRecord = records.find(r => r.id === selectedId);
@@ -1219,7 +1238,16 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
           </div>
           {onSubmit && (
             <button
-              onClick={() => setShowExplanation(true)}
+              onClick={() => {
+                setShowExplanation(true);
+                onTrackEvent?.('crm_priority_confirmed', {
+                  rankedLeads: priorityOrder.map((id, i) => {
+                    const l = records.find(r => r.id === id);
+                    return { position: i + 1, leadId: id, company: l?.company, displayName: l?.displayName };
+                  }),
+                  timeLeftSeconds: timeLeft,
+                });
+              }}
               disabled={priorityOrder.length === 0}
               className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-40 transition"
             >
@@ -1297,7 +1325,7 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                   draggable
                   onDragStart={e => { e.dataTransfer.setData('text/plain', r.id); setDraggingId(r.id); }}
                   onDragEnd={() => { setDraggingId(null); setDragOverSlot(null); }}
-                  onClick={() => setSelectedId(r.id)}
+                  onClick={() => { setSelectedId(r.id); onTrackEvent?.('crm_lead_viewed', { leadId: r.id, company: r.company, displayName: r.displayName, rank: priorityOrder.indexOf(r.id) + 1 || null }); }}
                   className={`w-full text-left flex items-center gap-3 px-4 py-3 border-b border-gray-100 transition cursor-grab active:cursor-grabbing select-none ${
                     isDragging ? 'opacity-40' :
                     isSelected ? 'bg-blue-50 border-l-2 border-l-blue-500' : 'hover:bg-gray-50'
@@ -1435,7 +1463,12 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                 { key: 'notes', title: 'Note', content: (
                   <textarea
                     value={notes[selectedRecord.id] ?? ''}
-                    onChange={e => { const n = { ...notes, [selectedRecord.id]: e.target.value }; setNotes(n); emitAnswer(priorityOrder, explanation, n); }}
+                    onChange={e => {
+                      const n = { ...notes, [selectedRecord.id]: e.target.value };
+                      setNotes(n);
+                      emitAnswer(priorityOrder, explanation, n);
+                    }}
+                    onBlur={e => { if (e.target.value) onTrackEvent?.('crm_note_saved', { leadId: selectedRecord.id, company: selectedRecord.company, length: e.target.value.length }); }}
                     placeholder="Aggiungi note su questo lead..."
                     rows={3}
                     className="w-full text-[12px] border border-gray-200 rounded-lg px-2 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-gray-300"
