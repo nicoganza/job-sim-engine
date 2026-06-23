@@ -1086,6 +1086,7 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
+  const [showExplanation, setShowExplanation] = useState(false);
 
   // Auto-expand only the first section when a new lead is selected
   useEffect(() => {
@@ -1138,6 +1139,71 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
   const timerDanger = timeLeft <= 120;
   const timerWarning = timeLeft <= 300 && !timerDanger;
 
+  if (showExplanation) {
+    return (
+      <div className="flex-1 flex flex-col bg-white overflow-hidden min-h-0">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+          <button onClick={() => setShowExplanation(false)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polyline points="15 18 9 12 15 6"/></svg>
+            Torna a modificare
+          </button>
+          <div className={`flex items-center gap-1.5 text-sm font-mono font-semibold px-3 py-1 rounded-lg ${timerDanger ? 'bg-red-100 text-red-600' : timerWarning ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {timerM}:{String(timerS).padStart(2, '0')}
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto">
+          <div className="w-full max-w-lg">
+            <div className="mb-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-1">La tua lista di priorità</h2>
+              <div className="space-y-2 mt-3">
+                {priorityOrder.map((id, i) => {
+                  const lead = records.find(r => r.id === id);
+                  if (!lead) return null;
+                  return (
+                    <div key={id} className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-lg px-4 py-2.5">
+                      <span className="text-sm font-bold text-blue-500 w-5 flex-shrink-0">#{i + 1}</span>
+                      <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[11px] font-bold" style={{ background: lead.avatarColor ?? 'linear-gradient(135deg,#6366f1,#7c3aed)' }}>
+                        {lead.displayName?.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900">{lead.displayName}</p>
+                        <p className="text-xs text-gray-500">{lead.company}{lead.contactRole ? ` · ${lead.contactRole}` : ''}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Spiega il tuo ragionamento <span className="text-gray-400 font-normal">(opzionale)</span>
+              </label>
+              <textarea
+                placeholder="Es. Ho dato priorità a X perché aveva segnali di urgenza più chiari, mentre Y..."
+                value={explanation}
+                rows={5}
+                onChange={e => { setExplanation(e.target.value); emitAnswer(priorityOrder, e.target.value, notes); }}
+                className="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-300"
+              />
+            </div>
+            <button
+              onClick={onSubmit}
+              disabled={submitting}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-40 transition"
+            >
+              {submitting ? (
+                <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Invio in corso...</>
+              ) : (
+                <>Invia risposta <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg></>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col bg-white overflow-hidden min-h-0">
       {/* Topbar */}
@@ -1153,15 +1219,11 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
           </div>
           {onSubmit && (
             <button
-              onClick={onSubmit}
-              disabled={submitting || priorityOrder.length === 0}
+              onClick={() => setShowExplanation(true)}
+              disabled={priorityOrder.length === 0}
               className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-40 transition"
             >
-              {submitting ? (
-                <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Invio...</>
-              ) : (
-                <>Conferma priorità <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg></>
-              )}
+              Conferma priorità <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
             </button>
           )}
         </div>
@@ -1211,15 +1273,6 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                 </div>
               );
             })}
-          </div>
-          <div className="px-2 py-2 border-t border-gray-200">
-            <textarea
-              placeholder="Spiega il criterio di prioritizzazione..."
-              value={explanation}
-              rows={3}
-              onChange={e => { setExplanation(e.target.value); emitAnswer(priorityOrder, e.target.value, notes); }}
-              className="w-full text-[12px] border border-gray-200 rounded-lg px-2 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-gray-300"
-            />
           </div>
         </aside>
 
