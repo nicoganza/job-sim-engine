@@ -975,22 +975,22 @@ function SlackWorkspaceRenderer({ config, answer, onChange }: any) {
       <aside className="w-52 flex-shrink-0 bg-[#1a1d21] flex flex-col">
         <div className="px-3 py-3 border-b border-white/10">
           <span className="text-white font-bold text-sm">{workspace.name}</span>
-          <div className="flex items-center gap-1 mt-0.5"><div className="w-1.5 h-1.5 rounded-full bg-green-400" /><span className="text-[11px] text-gray-400">Online</span></div>
+          <div className="flex items-center gap-1 mt-0.5"><div className="w-1.5 h-1.5 rounded-full bg-green-400" /><span className="text-[12px] text-gray-400">Online</span></div>
         </div>
         <div className="flex-1 overflow-y-auto py-2">
-          <p className="text-[10px] font-bold text-gray-400 uppercase px-3 mb-1">Canali</p>
+          <p className="text-[11px] font-bold text-gray-400 uppercase px-3 mb-1">Canali</p>
           {channels.map(ch => (
             <button key={ch.id} onClick={() => { setActiveChannel(ch.id); setUnread(p => ({ ...p, [ch.id]: 0 })); }}
-              className={`w-full text-left flex items-center gap-1.5 px-3 py-1 text-[13px] transition ${activeChannel === ch.id ? 'bg-[#1164A3] text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+              className={`w-full text-left flex items-center gap-1.5 px-3 py-1 text-[14px] transition ${activeChannel === ch.id ? 'bg-[#1164A3] text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
               <span className="opacity-60">#</span>
               <span className="flex-1 truncate">{ch.name}</span>
-              {(unread[ch.id] ?? 0) > 0 && <span className="bg-red-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center">{unread[ch.id]}</span>}
+              {(unread[ch.id] ?? 0) > 0 && <span className="bg-red-500 text-white text-[11px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center">{unread[ch.id]}</span>}
             </button>
           ))}
         </div>
         <div className="px-3 py-2 border-t border-white/10 flex items-center gap-2">
-          <div className="w-7 h-7 rounded-sm bg-blue-500 flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0">TU</div>
-          <span className="text-[12px] text-gray-300 truncate">Tu</span>
+          <div className="w-7 h-7 rounded-sm bg-blue-500 flex items-center justify-center text-white text-[12px] font-bold flex-shrink-0">TU</div>
+          <span className="text-[13px] text-gray-300 truncate">Tu</span>
           <div className="w-2 h-2 rounded-full bg-green-400 ml-auto flex-shrink-0" />
         </div>
       </aside>
@@ -1010,27 +1010,27 @@ function SlackWorkspaceRenderer({ config, answer, onChange }: any) {
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-1 bg-white">
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-1 h-px bg-gray-100" />
-            <span className="text-[11px] text-gray-400">Oggi</span>
+            <span className="text-[12px] text-gray-400">Oggi</span>
             <div className="flex-1 h-px bg-gray-100" />
           </div>
           {activeMsgs.map(msg => (
             <div key={msg.id} className={`flex gap-2 ${msg.grouped ? 'ml-9' : ''}`}>
               {!msg.grouped && (
-                <div className="w-8 h-8 rounded-sm flex-shrink-0 flex items-center justify-center text-white text-[11px] font-bold mt-0.5" style={{ background: msg.memberColor }}>{msg.memberInitials}</div>
+                <div className="w-8 h-8 rounded-sm flex-shrink-0 flex items-center justify-center text-white text-[12px] font-bold mt-0.5" style={{ background: msg.memberColor }}>{msg.memberInitials}</div>
               )}
               <div className="flex-1 min-w-0">
                 {!msg.grouped && (
                   <div className="flex items-baseline gap-2 mb-0.5">
-                    <span className="text-[13px] font-bold text-gray-900">{msg.memberName}</span>
-                    <span className="text-[10px] text-gray-400">{msg.time}</span>
+                    <span className="text-[14px] font-bold text-gray-900">{msg.memberName}</span>
+                    <span className="text-[11px] text-gray-400">{msg.time}</span>
                   </div>
                 )}
-                <p className="text-[13px] text-gray-800 leading-relaxed">{msg.text}</p>
+                <p className="text-[14px] text-gray-800 leading-relaxed">{msg.text}</p>
               </div>
             </div>
           ))}
           {typing && (
-            <div className="flex items-center gap-2 text-[12px] text-gray-400 pl-10">
+            <div className="flex items-center gap-2 text-[13px] text-gray-400 pl-10">
               <div className="flex gap-0.5">
                 {[0,1,2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
               </div>
@@ -1057,7 +1057,7 @@ function SlackWorkspaceRenderer({ config, answer, onChange }: any) {
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
               placeholder={`Scrivi un messaggio in #${channels.find(c => c.id === activeChannel)?.name ?? activeChannel}…`}
               disabled={!seqDone}
-              className="flex-1 text-[13px] outline-none bg-transparent placeholder:text-gray-400"
+              className="flex-1 text-[14px] outline-none bg-transparent placeholder:text-gray-400"
             />
             <button onClick={sendMessage} disabled={!input.trim() || !seqDone}
               className="text-blue-500 hover:text-blue-600 disabled:opacity-30 transition">
@@ -1171,8 +1171,8 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
         {/* Left: Priority panel */}
         <aside className="w-56 flex-shrink-0 border-r border-gray-200 flex flex-col bg-gray-50 overflow-hidden">
           <div className="px-3 py-3 border-b border-gray-200">
-            <p className="text-[11px] font-bold text-gray-600 uppercase tracking-wide">Priorità Inbound</p>
-            <p className="text-[10px] text-gray-400 mt-0.5">Trascina i lead qui · {priorityOrder.length}/{maxItems}</p>
+            <p className="text-[12px] font-bold text-gray-600 uppercase tracking-wide">Priorità Inbound</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">Trascina i lead qui · {priorityOrder.length}/{maxItems}</p>
           </div>
           <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1.5">
             {Array.from({ length: maxItems }).map((_, i) => {
@@ -1191,14 +1191,14 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                   }`}
                 >
                   <div className="flex items-center gap-1.5">
-                    <span className={`text-[10px] font-bold flex-shrink-0 ${lead ? 'text-blue-600' : isOver ? 'text-blue-400' : 'text-gray-300'}`}>#{i + 1}</span>
+                    <span className={`text-[11px] font-bold flex-shrink-0 ${lead ? 'text-blue-600' : isOver ? 'text-blue-400' : 'text-gray-300'}`}>#{i + 1}</span>
                     {lead ? (
                       <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-semibold text-gray-800 truncate">{lead.company}</p>
-                        <p className="text-[10px] text-gray-500 truncate">{lead.displayName}</p>
+                        <p className="text-[12px] font-semibold text-gray-800 truncate">{lead.company}</p>
+                        <p className="text-[11px] text-gray-500 truncate">{lead.displayName}</p>
                       </div>
                     ) : (
-                      <span className={`text-[10px] ${isOver ? 'text-blue-500 font-semibold' : 'text-gray-300'}`}>
+                      <span className={`text-[11px] ${isOver ? 'text-blue-500 font-semibold' : 'text-gray-300'}`}>
                         {isOver ? 'Rilascia qui' : 'Slot libero'}
                       </span>
                     )}
@@ -1218,7 +1218,7 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
               value={explanation}
               rows={3}
               onChange={e => { setExplanation(e.target.value); emitAnswer(priorityOrder, e.target.value, notes); }}
-              className="w-full text-[11px] border border-gray-200 rounded-lg px-2 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-gray-300"
+              className="w-full text-[12px] border border-gray-200 rounded-lg px-2 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-gray-300"
             />
           </div>
         </aside>
@@ -1227,7 +1227,7 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
         <main className="flex-1 flex flex-col min-w-0 border-r border-gray-200 overflow-hidden">
           <div className="px-4 py-2.5 border-b border-gray-100">
             <h2 className="text-sm font-bold text-gray-900">Lead Inbound</h2>
-            <p className="text-[11px] text-gray-400">{records.length} lead</p>
+            <p className="text-[12px] text-gray-400">{records.length} lead</p>
           </div>
           <div className="flex-1 overflow-y-auto">
             {records.map(r => {
@@ -1248,23 +1248,22 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                   }`}
                 >
                   <div className="relative flex-shrink-0">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-bold" style={{ background: r.avatarColor ?? 'linear-gradient(135deg,#6366f1,#7c3aed)' }}>{initials}</div>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ background: r.avatarColor ?? 'linear-gradient(135deg,#6366f1,#7c3aed)' }}>{initials}</div>
                     {rank >= 0 && <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-500 text-white text-[9px] font-bold flex items-center justify-center">{rank + 1}</div>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-gray-900 truncate">{r.displayName}</p>
-                    <p className="text-[11px] text-gray-500 truncate">{r.company}{r.contactRole ? ` · ${r.contactRole}` : ''}</p>
+                    <p className="text-[14px] font-semibold text-gray-900 truncate">{r.displayName}</p>
+                    <p className="text-[12px] text-gray-500 truncate">{r.company}{r.contactRole ? ` · ${r.contactRole}` : ''}</p>
                     <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                       {r.source && (
-                        <span className="inline-flex items-center gap-1 text-[10px] text-gray-600 bg-gray-100 border border-gray-200 rounded-full px-2 py-0.5 font-medium">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 bg-gray-100 border border-gray-200 rounded-full px-2 py-0.5 font-medium">
                           {r.source.icon} {r.source.type}
                         </span>
                       )}
-                      {r.location && <span className="text-[10px] text-gray-400">{r.location}</span>}
-                      {r.employees && <span className="text-[10px] text-gray-400">{r.location ? '·' : ''} {r.employees} dip.</span>}
+                      {r.location && <span className="text-[11px] text-gray-400">{r.location}</span>}
                     </div>
                     {(r.activities ?? []).length > 0 && (
-                      <p className="text-[10px] text-gray-400 truncate mt-0.5">{r.activities[0].icon} {r.activities[0].text}</p>
+                      <p className="text-[11px] text-gray-400 truncate mt-0.5">{r.activities[0].icon} {r.activities[0].text}</p>
                     )}
                   </div>
                 </div>
@@ -1278,25 +1277,25 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
           {!selectedRecord ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-2 text-gray-300 p-6">
               <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              <p className="text-[12px] text-center">Seleziona un lead per i dettagli</p>
+              <p className="text-[13px] text-center">Seleziona un lead per i dettagli</p>
             </div>
           ) : (
             <div className="flex flex-col">
               {/* Header */}
               <div className="px-4 pt-4 pb-3 border-b border-gray-100">
                 <div className="flex items-start gap-3 mb-2">
-                  <div className="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[13px] font-bold" style={{ background: selectedRecord.avatarColor ?? 'linear-gradient(135deg,#6366f1,#7c3aed)' }}>
+                  <div className="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[14px] font-bold" style={{ background: selectedRecord.avatarColor ?? 'linear-gradient(135deg,#6366f1,#7c3aed)' }}>
                     {selectedRecord.displayName?.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-bold text-gray-900 leading-tight">{selectedRecord.displayName}</p>
-                    {selectedRecord.contactRole && <p className="text-[12px] text-gray-500 mt-0.5">{selectedRecord.contactRole}</p>}
+                    <p className="text-[15px] font-bold text-gray-900 leading-tight">{selectedRecord.displayName}</p>
+                    {selectedRecord.contactRole && <p className="text-[13px] text-gray-500 mt-0.5">{selectedRecord.contactRole}</p>}
                   </div>
                 </div>
-                <p className="text-[13px] font-semibold text-gray-800 mb-2">{selectedRecord.company}</p>
+                <p className="text-[14px] font-semibold text-gray-800 mb-2">{selectedRecord.company}</p>
                 {(selectedRecord.source || selectedRecord.sector) && (
                   <div className="mb-2">
-                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 bg-gray-100 border border-gray-200 rounded-full px-2.5 py-0.5 font-medium">
+                    <span className="inline-flex items-center gap-1 text-[12px] text-gray-600 bg-gray-100 border border-gray-200 rounded-full px-2.5 py-0.5 font-medium">
                       {selectedRecord.source?.icon} {selectedRecord.source?.type}{selectedRecord.sector ? ` · ${selectedRecord.sector}` : ''}
                     </span>
                   </div>
@@ -1304,19 +1303,19 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                 {(selectedRecord.contactEmail || selectedRecord.contactPhone || selectedRecord.website) && (
                   <div className="flex flex-wrap gap-1.5 mb-3">
                     {selectedRecord.contactEmail && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 bg-white border border-gray-200 rounded-md px-2 py-1 leading-none">
+                      <span className="inline-flex items-center gap-1 text-[12px] text-gray-600 bg-white border border-gray-200 rounded-md px-2 py-1 leading-none">
                         <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                         {selectedRecord.contactEmail}
                       </span>
                     )}
                     {selectedRecord.contactPhone && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 bg-white border border-gray-200 rounded-md px-2 py-1 leading-none">
+                      <span className="inline-flex items-center gap-1 text-[12px] text-gray-600 bg-white border border-gray-200 rounded-md px-2 py-1 leading-none">
                         <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .84h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
                         {selectedRecord.contactPhone}
                       </span>
                     )}
                     {selectedRecord.website && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 bg-white border border-gray-200 rounded-md px-2 py-1 leading-none">
+                      <span className="inline-flex items-center gap-1 text-[12px] text-gray-600 bg-white border border-gray-200 rounded-md px-2 py-1 leading-none">
                         <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
                         {selectedRecord.website}
                       </span>
@@ -1324,7 +1323,7 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                   </div>
                 )}
                 {priorityOrder.includes(selectedRecord.id) ? (
-                  <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-lg bg-blue-500 text-white">
+                  <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold px-3 py-1.5 rounded-lg bg-blue-500 text-white">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
                     #{priorityOrder.indexOf(selectedRecord.id) + 1} in lista priorità
                   </span>
@@ -1332,7 +1331,7 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                   <button
                     onClick={() => togglePriority(selectedRecord.id)}
                     disabled={priorityOrder.length >= maxItems}
-                    className="flex items-center justify-center gap-1.5 w-full text-[12px] font-semibold px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    className="flex items-center justify-center gap-1.5 w-full text-[13px] font-semibold px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
                   >
                     + Aggiungi alla priorità
                   </button>
@@ -1345,17 +1344,17 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                   <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                     {[['SETTORE', selectedRecord.sector], ['DIPENDENTI', selectedRecord.employees], ['FATTURATO', selectedRecord.revenue], ['SEDE', selectedRecord.location], ['ANNO FONDAZIONE', selectedRecord.founded?.toString()], ['SITO WEB', selectedRecord.website]].map(([l, v]) => v ? (
                       <div key={l as string}>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">{l}</p>
-                        <p className="text-[12px] text-gray-800 font-medium">{String(v)}</p>
+                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">{l}</p>
+                        <p className="text-[13px] text-gray-800 font-medium">{String(v)}</p>
                       </div>
                     ) : null)}
                     {(selectedRecord.missingInfo ?? []).length > 0 && (
                       <div className="col-span-2 mt-1 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-                        <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-1.5">Informazioni mancanti</p>
+                        <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wide mb-1.5">Informazioni mancanti</p>
                         {(selectedRecord.missingInfo ?? []).map((m: string, i: number) => (
                           <div key={i} className="flex items-start gap-1.5 mb-0.5">
                             <svg className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-                            <p className="text-[11px] text-amber-700">{m}</p>
+                            <p className="text-[12px] text-amber-700">{m}</p>
                           </div>
                         ))}
                       </div>
@@ -1367,18 +1366,18 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                     {(selectedRecord.activities ?? []).map((a: any, i: number) => (
                       <div key={i} className="flex gap-2">
                         <span className="text-base flex-shrink-0">{a.icon}</span>
-                        <div><p className="text-[11px] text-gray-700">{a.text}</p><p className="text-[10px] text-gray-400">{a.date}</p></div>
+                        <div><p className="text-[12px] text-gray-700">{a.text}</p><p className="text-[11px] text-gray-400">{a.date}</p></div>
                       </div>
                     ))}
-                    {selectedRecord.formNote && <div className="bg-blue-50 border border-blue-100 rounded-lg p-2 text-[11px] text-blue-700 italic">{selectedRecord.formNote}</div>}
+                    {selectedRecord.formNote && <div className="bg-blue-50 border border-blue-100 rounded-lg p-2 text-[12px] text-blue-700 italic">{selectedRecord.formNote}</div>}
                   </div>
                 ) },
                 { key: 'interactions', title: 'Interazioni precedenti', content: (
                   (selectedRecord.interactions ?? []).length > 0
                     ? (selectedRecord.interactions ?? []).map((i: any, idx: number) => (
-                      <div key={idx} className="flex gap-2"><span className="text-base">📌</span><div><p className="text-[11px] text-gray-700">{i.text}</p><p className="text-[10px] text-gray-400">{i.date}</p></div></div>
+                      <div key={idx} className="flex gap-2"><span className="text-base">📌</span><div><p className="text-[12px] text-gray-700">{i.text}</p><p className="text-[11px] text-gray-400">{i.date}</p></div></div>
                     ))
-                    : <p className="text-[11px] text-gray-400">Nessuna interazione registrata</p>
+                    : <p className="text-[12px] text-gray-400">Nessuna interazione registrata</p>
                 ) },
                 { key: 'notes', title: 'Note', content: (
                   <textarea
@@ -1386,13 +1385,13 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                     onChange={e => { const n = { ...notes, [selectedRecord.id]: e.target.value }; setNotes(n); emitAnswer(priorityOrder, explanation, n); }}
                     placeholder="Aggiungi note su questo lead..."
                     rows={3}
-                    className="w-full text-[11px] border border-gray-200 rounded-lg px-2 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-gray-300"
+                    className="w-full text-[12px] border border-gray-200 rounded-lg px-2 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-gray-300"
                   />
                 ) },
               ].map(({ key, title, content }) => (
                 <div key={key} className="border-b border-gray-100">
                   <button onClick={() => toggleSection(`${selectedRecord.id}-${key}`)} className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition">
-                    <span className="text-[12px] font-semibold text-gray-700">{title}</span>
+                    <span className="text-[13px] font-semibold text-gray-700">{title}</span>
                     <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform ${expandedSections[`${selectedRecord.id}-${key}`] ? '' : '-rotate-90'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polyline points="6 9 12 15 18 9"/></svg>
                   </button>
                   {expandedSections[`${selectedRecord.id}-${key}`] && (
