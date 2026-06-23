@@ -1262,9 +1262,6 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                       )}
                       {r.location && <span className="text-[11px] text-gray-400">{r.location}</span>}
                     </div>
-                    {(r.activities ?? []).length > 0 && (
-                      <p className="text-[11px] text-gray-400 truncate mt-0.5">{r.activities[0].icon} {r.activities[0].text}</p>
-                    )}
                   </div>
                 </div>
               );
