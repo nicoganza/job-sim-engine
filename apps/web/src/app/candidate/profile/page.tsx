@@ -1,118 +1,13 @@
 'use client';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Camera, FileText, Link2, MapPin, Phone, Upload, ArrowRight, CheckCircle, Loader2,
+  Camera, FileText, Link2, MapPin, Phone, Upload, ArrowRight, CheckCircle,
 } from 'lucide-react';
 import TopNav from '@/components/TopNav';
 import Footer from '@/components/Footer';
-import { Button, Card, Avatar, Badge, Alert, Input } from '@/components/ui';
-
-// ─── City autocomplete (Photon / OpenStreetMap) ───────────────────────────────
-type CitySuggestion = { label: string; country: string };
-
-function CityAutocomplete({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const [query, setQuery] = useState(value);
-  const [suggestions, setSuggestions] = useState<CitySuggestion[]>([]);
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Sync external value when it changes (e.g. profile loaded)
-  useEffect(() => { setQuery(value); }, [value]);
-
-  const search = useCallback((q: string) => {
-    if (q.length < 2) { setSuggestions([]); return; }
-    setLoading(true);
-    fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6&layer=city&lang=it`)
-      .then(r => r.json())
-      .then((data: any) => {
-        const items: CitySuggestion[] = (data.features ?? [])
-          .map((f: any) => {
-            const p = f.properties;
-            const city = p.name ?? p.city ?? '';
-            const country = p.country ?? '';
-            const state = p.state ?? '';
-            const label = [city, state !== city ? state : '', country].filter(Boolean).join(', ');
-            return { label, country };
-          })
-          .filter((s: CitySuggestion) => s.label);
-        // deduplicate by label
-        const seen = new Set<string>();
-        setSuggestions(items.filter(s => { if (seen.has(s.label)) return false; seen.add(s.label); return true; }));
-        setOpen(true);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  function handleChange(v: string) {
-    setQuery(v);
-    onChange(v);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => search(v), 300);
-  }
-
-  function pick(label: string) {
-    setQuery(label);
-    onChange(label);
-    setSuggestions([]);
-    setOpen(false);
-  }
-
-  useEffect(() => {
-    function onClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener('mousedown', onClickOutside);
-    return () => document.removeEventListener('mousedown', onClickOutside);
-  }, []);
-
-  return (
-    <div ref={ref} className="relative col-span-1">
-      <label className="block text-[13px] font-semibold text-ink-700 mb-1.5">Città / Posizione</label>
-      <div className="relative">
-        <MapPin size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400 pointer-events-none" />
-        <input
-          type="text"
-          value={query}
-          onChange={e => handleChange(e.target.value)}
-          onFocus={() => suggestions.length > 0 && setOpen(true)}
-          placeholder="Milano, Italia"
-          autoComplete="off"
-          className="w-full pl-9 pr-9 py-2.5 border border-ink-200 rounded-xl text-[14px] text-ink-900 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition"
-        />
-        {loading && (
-          <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 animate-spin" />
-        )}
-      </div>
-      {open && suggestions.length > 0 && (
-        <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-ink-200 rounded-xl shadow-lg overflow-hidden">
-          {suggestions.map((s, i) => (
-            <button
-              key={i}
-              type="button"
-              onMouseDown={e => e.preventDefault()}
-              onClick={() => pick(s.label)}
-              className="w-full text-left px-4 py-2.5 text-[13px] text-ink-800 hover:bg-ink-50 flex items-center gap-2.5 transition-colors"
-            >
-              <MapPin size={13} className="text-ink-400 flex-none" />
-              <span>{s.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+import { Button, Card, Avatar, Badge, Alert, Input, CityAutocomplete } from '@/components/ui';
 
 type Profile = {
   id: string;

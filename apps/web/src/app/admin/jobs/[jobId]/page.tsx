@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Users, Zap, Sparkles, CheckCircle, Clock, ChevronRight, Pencil, Trash2, X, AlertTriangle } from 'lucide-react';
 import { api } from '@/lib/api';
-import { Button, Badge, Card, Stat, Progress, Alert, Input } from '@/components/ui';
+import { Button, Badge, Card, Stat, Progress, Alert, Input, CityAutocomplete } from '@/components/ui';
 
 type Job = {
   id: string;
@@ -255,10 +255,12 @@ export default function JobDetailPage() {
                 <label className="block text-[13px] font-medium text-ink-700 mb-1.5">Seniority</label>
                 <Input value={form.seniority} onChange={e => setField('seniority', e.target.value)} placeholder="es. Junior, Senior" />
               </div>
-              <div>
-                <label className="block text-[13px] font-medium text-ink-700 mb-1.5">Sede</label>
-                <Input value={form.location} onChange={e => setField('location', e.target.value)} placeholder="es. Milano" />
-              </div>
+              <CityAutocomplete
+                label="Sede"
+                placeholder="es. Milano"
+                value={form.location}
+                onChange={v => setField('location', v)}
+              />
               <div>
                 <label className="block text-[13px] font-medium text-ink-700 mb-1.5">Modalità</label>
                 <select

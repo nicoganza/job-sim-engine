@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
-import { Button, Alert } from '@/components/ui';
+import { Button, Alert, CityAutocomplete } from '@/components/ui';
 
 export default function NewJobPage() {
   const router = useRouter();
@@ -75,15 +75,12 @@ export default function NewJobPage() {
                 className="w-full border border-ink-200 rounded-lg px-3.5 py-2.5 text-[14px] text-ink-900 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition"
               />
             </div>
-            <div>
-              <label className="block text-[12px] font-semibold text-ink-500 mb-1.5 uppercase tracking-wide">Luogo</label>
-              <input
-                value={form.location}
-                onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
-                placeholder="es. Milano"
-                className="w-full border border-ink-200 rounded-lg px-3.5 py-2.5 text-[14px] text-ink-900 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition"
-              />
-            </div>
+            <CityAutocomplete
+              label="Luogo"
+              placeholder="es. Milano"
+              value={form.location}
+              onChange={v => setForm(f => ({ ...f, location: v }))}
+            />
             <div className="col-span-2">
               <label className="block text-[12px] font-semibold text-ink-500 mb-1.5 uppercase tracking-wide">Modalità di lavoro</label>
               <div className="flex gap-2">
