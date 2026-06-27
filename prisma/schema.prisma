@@ -98,6 +98,7 @@ model JobPosting {
   createdByUserId          String
   activeSimulationId       String?
   activeSimulationVersionId String?
+  simulationSkills         Json?
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 

@@ -1,8 +1,17 @@
 import { Router } from 'express';
+import OpenAI from 'openai';
+import https from 'https';
 import { prisma } from '../lib/prisma';
 import { AuthRequest, requireAuth } from '../middleware/auth';
 import { getModule } from '@job-sim/simulation-modules';
 import { aiFillQueue } from '../lib/queues';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  maxRetries: 2,
+  timeout: 30000,
+  httpAgent: new https.Agent({ keepAlive: true }),
+});
 
 const router = Router();
 router.use(requireAuth);
@@ -159,9 +168,39 @@ router.post('/:simulationId/publish', async (req: AuthRequest, res) => {
   await prisma.simulation.update({ where: { id: sim.id }, data: { status: 'active', currentVersionId: version.id } });
   if (sim.jobPostingId) {
     await prisma.jobPosting.update({ where: { id: sim.jobPostingId }, data: { activeSimulationId: sim.id, activeSimulationVersionId: version.id } });
+    // Fire-and-forget: generate skills for the job offer page
+    generateSimulationSkills(sim.jobPostingId, sim.steps.map(s => ({ type: s.type, title: s.title }))).catch(() => {});
   }
   res.status(201).json(version);
 });
+
+async function generateSimulationSkills(jobPostingId: string, steps: { type: string; title: string }[]) {
+  const stepList = steps.map((s, i) => `${i + 1}. [${s.type}] ${s.title}`).join('\n');
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    temperature: 0.4,
+    max_tokens: 600,
+    messages: [
+      {
+        role: 'system',
+        content: 'You extract practical skills from job simulation steps. Return a JSON array of skill objects. Each object has "icon" (single emoji), "title" (3-6 words, English), and "description" (one sentence, English, starting with a verb like "Learn", "Practice", "Develop"). Return 4-7 skills. Only output raw JSON, no markdown.',
+      },
+      {
+        role: 'user',
+        content: `Simulation steps:\n${stepList}\n\nWhat skills will candidates learn and practice by completing these steps?`,
+      },
+    ],
+  });
+
+  const raw = completion.choices[0]?.message?.content?.trim() ?? '[]';
+  let skills: unknown;
+  try {
+    skills = JSON.parse(raw);
+  } catch {
+    return;
+  }
+  await prisma.jobPosting.update({ where: { id: jobPostingId }, data: { simulationSkills: skills } });
+}
 
 router.get('/:simulationId/versions', async (req: AuthRequest, res) => {
   const versions = await prisma.simulationVersion.findMany({ where: { simulationId: req.params.simulationId, organizationId: req.organizationId }, orderBy: { versionNumber: 'desc' } });

@@ -15,7 +15,7 @@ router.get('/jobs', async (req, res) => {
 router.get('/jobs/:jobId', async (req, res) => {
   const job = await prisma.jobPosting.findFirst({
     where: { id: req.params.jobId, status: 'published' },
-    select: { id: true, title: true, description: true, department: true, location: true, remotePolicy: true, seniority: true, employmentType: true, createdAt: true, activeSimulationVersionId: true, organization: { select: { name: true } } },
+    select: { id: true, title: true, description: true, department: true, location: true, remotePolicy: true, seniority: true, employmentType: true, createdAt: true, activeSimulationVersionId: true, simulationSkills: true, organization: { select: { name: true } } },
   });
   if (!job) { res.status(404).json({ error: 'Not found' }); return; }
   res.json(job);

@@ -9,6 +9,12 @@ import TopNav from '@/components/TopNav';
 import Footer from '@/components/Footer';
 import { Button, Badge, Tag, Card, Avatar } from '@/components/ui';
 
+type SimulationSkill = {
+  icon: string;
+  title: string;
+  description: string;
+};
+
 type Job = {
   id: string;
   title: string;
@@ -19,6 +25,7 @@ type Job = {
   seniority?: string;
   employmentType?: string;
   activeSimulationVersionId?: string;
+  simulationSkills?: SimulationSkill[] | null;
   organization: { name: string };
 };
 
@@ -189,6 +196,26 @@ export default function JobDetailPage() {
                 ))}
               </ul>
             </Card>
+
+            {job.simulationSkills && job.simulationSkills.length > 0 && (
+              <Card padding="lg">
+                <h2 className="text-[20px] mb-1">Skills you will learn and practice</h2>
+                <p className="text-[14px] text-ink-500 mb-5">Completing the simulation develops these real-world skills.</p>
+                <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
+                  {job.simulationSkills.map((skill, i) => (
+                    <div key={i} className="flex gap-3 items-start">
+                      <div className="w-9 h-9 rounded-xl bg-brand-subtle flex items-center justify-center text-[18px] flex-none">
+                        {skill.icon}
+                      </div>
+                      <div>
+                        <div className="text-[14px] font-semibold text-ink-900">{skill.title}</div>
+                        <div className="text-[13px] text-ink-500 leading-relaxed mt-0.5">{skill.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
           </div>
 
           {/* Sidebar */}
