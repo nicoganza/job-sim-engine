@@ -2,9 +2,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Users, Zap, Sparkles, CheckCircle, Clock, ChevronRight, Pencil, Trash2, X, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Users, Zap, Sparkles, CheckCircle, Clock, ChevronRight, Pencil, Trash2, X, AlertTriangle, Plus, GripVertical } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button, Badge, Card, Stat, Progress, Alert, Input, CityAutocomplete } from '@/components/ui';
+
+type SimSkill = { icon: string; title: string; description: string };
 
 type Job = {
   id: string;
@@ -17,6 +19,7 @@ type Job = {
   remotePolicy?: string;
   employmentType?: string;
   activeSimulationVersionId?: string;
+  simulationSkills?: SimSkill[] | null;
 };
 
 type EditForm = {
@@ -27,6 +30,7 @@ type EditForm = {
   location: string;
   remotePolicy: string;
   employmentType: string;
+  simulationSkills: SimSkill[];
 };
 
 type Analytics = {
@@ -59,13 +63,14 @@ const REMOTE: Record<string, string> = {
 
 function jobToForm(job: Job): EditForm {
   return {
-    title:          job.title ?? '',
-    description:    job.description ?? '',
-    department:     job.department ?? '',
-    seniority:      job.seniority ?? '',
-    location:       job.location ?? '',
-    remotePolicy:   job.remotePolicy ?? '',
-    employmentType: job.employmentType ?? '',
+    title:            job.title ?? '',
+    description:      job.description ?? '',
+    department:       job.department ?? '',
+    seniority:        job.seniority ?? '',
+    location:         job.location ?? '',
+    remotePolicy:     job.remotePolicy ?? '',
+    employmentType:   job.employmentType ?? '',
+    simulationSkills: job.simulationSkills ?? [],
   };
 }
 
@@ -104,13 +109,14 @@ export default function JobDetailPage() {
     setSaving(true); setMsg(null);
     try {
       const updated = await api.patch<Job>(`/api/jobs/${jobId}`, {
-        title:          form.title,
-        description:    form.description,
-        department:     form.department || undefined,
-        seniority:      form.seniority || undefined,
-        location:       form.location || undefined,
-        remotePolicy:   form.remotePolicy || undefined,
-        employmentType: form.employmentType || undefined,
+        title:            form.title,
+        description:      form.description,
+        department:       form.department || undefined,
+        seniority:        form.seniority || undefined,
+        location:         form.location || undefined,
+        remotePolicy:     form.remotePolicy || undefined,
+        employmentType:   form.employmentType || undefined,
+        simulationSkills: form.simulationSkills.length > 0 ? form.simulationSkills : null,
       });
       setJob(j => j ? { ...j, ...form } : j);
       setEditing(false);
@@ -289,6 +295,83 @@ export default function JobDetailPage() {
                 </select>
               </div>
             </div>
+          </Card>
+
+          {/* Skills editor */}
+          <Card padding="lg">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-[14px] font-semibold text-ink-700">Skills you will learn and practice</h2>
+                <p className="text-[12px] text-ink-400 mt-0.5">Visibili nell'offerta pubblica. Auto-generate dalla simulazione, ma modificabili manualmente.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setForm(f => f ? { ...f, simulationSkills: [...f.simulationSkills, { icon: '⭐', title: '', description: '' }] } : f)}
+                className="flex items-center gap-1.5 text-[12px] font-semibold text-brand border border-brand/30 rounded-lg px-3 py-1.5 hover:bg-brand-subtle transition-colors"
+              >
+                <Plus size={13} /> Aggiungi skill
+              </button>
+            </div>
+            {form.simulationSkills.length === 0 ? (
+              <p className="text-[13px] text-ink-400 text-center py-4">Nessuna skill ancora — verranno generate automaticamente alla prossima pubblicazione della simulazione.</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {form.simulationSkills.map((skill, i) => (
+                  <div key={i} className="flex gap-2 items-start">
+                    <div className="flex items-center justify-center w-9 h-9 mt-0.5 text-[18px] shrink-0 cursor-grab">
+                      <GripVertical size={14} className="text-ink-300" />
+                    </div>
+                    <input
+                      value={skill.icon}
+                      onChange={e => setForm(f => {
+                        if (!f) return f;
+                        const s = [...f.simulationSkills];
+                        s[i] = { ...s[i], icon: e.target.value };
+                        return { ...f, simulationSkills: s };
+                      })}
+                      className="w-14 border border-ink-200 rounded-lg px-2 py-2 text-[18px] text-center focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
+                      placeholder="⭐"
+                      maxLength={4}
+                    />
+                    <div className="flex-1 flex flex-col gap-1.5">
+                      <input
+                        value={skill.title}
+                        onChange={e => setForm(f => {
+                          if (!f) return f;
+                          const s = [...f.simulationSkills];
+                          s[i] = { ...s[i], title: e.target.value };
+                          return { ...f, simulationSkills: s };
+                        })}
+                        className="w-full border border-ink-200 rounded-lg px-3 py-1.5 text-[13px] font-semibold text-ink-900 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
+                        placeholder="Titolo skill (es. CRM Management)"
+                      />
+                      <input
+                        value={skill.description}
+                        onChange={e => setForm(f => {
+                          if (!f) return f;
+                          const s = [...f.simulationSkills];
+                          s[i] = { ...s[i], description: e.target.value };
+                          return { ...f, simulationSkills: s };
+                        })}
+                        className="w-full border border-ink-200 rounded-lg px-3 py-1.5 text-[13px] text-ink-600 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
+                        placeholder="Descrizione breve (es. Practice managing leads in a real CRM pipeline)"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => {
+                        if (!f) return f;
+                        const s = f.simulationSkills.filter((_, idx) => idx !== i);
+                        return { ...f, simulationSkills: s };
+                      })}
+                      className="mt-1 p-1.5 rounded hover:bg-danger-subtle text-ink-400 hover:text-danger transition-colors shrink-0"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
 
           {/* Simulation link */}
