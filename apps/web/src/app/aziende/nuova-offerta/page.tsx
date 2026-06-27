@@ -6,6 +6,8 @@ import TopNav from '@/components/TopNav';
 import Footer from '@/components/Footer';
 import { Button, Badge, Card, Alert } from '@/components/ui';
 
+const SIM_URL = process.env.NEXT_PUBLIC_SIM_URL ?? 'http://localhost:3001';
+
 const STEPS = [
   { id: 0, label: 'Dettagli offerta' },
   { id: 1, label: 'Costruisci simulazione' },
@@ -127,8 +129,16 @@ function StepSimulation({ data, set }: { data: FormData; set: (k: 'tasks', v: Ta
           );
         })}
       </div>
-      <div className="mt-4">
+      <div className="mt-4 flex items-center justify-between">
         <Button variant="secondary" iconLeft={<Plus size={15} />} size="sm">Crea task personalizzata</Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          iconLeft={<Play size={14} />}
+          onClick={() => window.open(`${SIM_URL}?preview=true`, '_blank')}
+        >
+          Prova anteprima
+        </Button>
       </div>
     </div>
   );
@@ -199,7 +209,13 @@ function StepReview({ data }: { data: FormData }) {
               <span className="text-[13px] text-ink-400">Nessuna task selezionata</span>
             )}
           </div>
-          <Button block iconLeft={<Play size={15} />}>Inizia la simulazione</Button>
+          <Button
+            block
+            iconLeft={<Play size={15} />}
+            onClick={() => window.open(`${SIM_URL}?preview=true`, '_blank')}
+          >
+            Prova la simulazione
+          </Button>
         </Card>
       </div>
     </div>
