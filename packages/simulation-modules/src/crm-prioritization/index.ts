@@ -2,6 +2,13 @@ import { z } from 'zod';
 import { StepScore } from '@job-sim/shared';
 import { SimulationModule, ValidationResult, ModuleScoringInput, ModuleAnalytics, validate } from '../types';
 
+const SalesCallObjectionSchema = z.object({
+  id: z.string(),
+  type: z.enum(['budget', 'timing', 'authority', 'need', 'trust', 'competition', 'implementation', 'risk', 'internal_resistance']),
+  description: z.string(),
+  severity: z.enum(['low', 'medium', 'high']),
+});
+
 const CrmRecordSchema = z.object({
   id: z.string(),
   displayName: z.string(),
@@ -38,6 +45,8 @@ const CrmRecordSchema = z.object({
     date: z.string(),
   })).optional(),
   missingInfo: z.array(z.string()).optional(),
+  // Hidden sales call objections — never sent to candidate
+  salesCallObjections: z.array(SalesCallObjectionSchema).optional(),
 });
 
 const ConfigSchema = z.object({
@@ -54,12 +63,25 @@ const ConfigSchema = z.object({
     explanationQuality: z.number(),
     riskAwareness: z.number(),
   }),
+  // Sales call feature
+  enableSalesCall: z.boolean().default(false),
+  salesCallContext: z.string().optional(),
 });
 
 const AnswerSchema = z.object({
   orderedRecordIds: z.array(z.string()),
   explanation: z.string().optional(),
   leadNotes: z.record(z.string()).optional(),
+  salesCallData: z.object({
+    callSessionId: z.string(),
+    transcript: z.array(z.object({
+      speaker: z.enum(['candidate', 'ai_buyer']),
+      text: z.string(),
+      timestampMs: z.number(),
+    })),
+    outcome: z.object({ nextStepAgreed: z.boolean() }),
+    durationSeconds: z.number().optional(),
+  }).optional(),
 });
 
 type Config = z.infer<typeof ConfigSchema>;
@@ -126,6 +148,8 @@ export const crmPrioritizationModule: SimulationModule<Config, Answer> = {
       maxRankedItems: config.maxRankedItems,
       requiredExplanation: config.requiredExplanation,
       timeLimitSeconds: config.timeLimitSeconds,
+      enableSalesCall: config.enableSalesCall,
+      // salesCallObjections stay server-side only
     };
   },
 

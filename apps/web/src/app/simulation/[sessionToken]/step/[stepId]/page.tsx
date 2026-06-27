@@ -1070,8 +1070,436 @@ function SlackWorkspaceRenderer({ config, answer, onChange }: any) {
   );
 }
 
+// ─── CRM Lead Call Screen (voice call via OpenAI Realtime WebRTC) ─────────────
+function CrmLeadCallScreen({ sessionToken, stepId, topLeadId, onCallComplete, onBack }: {
+  sessionToken: string;
+  stepId: string;
+  topLeadId: string;
+  onCallComplete: (data: { callSessionId: string; transcript: any[]; durationSeconds: number }) => void;
+  onBack: () => void;
+}) {
+  const [phase, setPhase] = useState<'pre' | 'connecting' | 'active' | 'ended'>('pre');
+  const [lead, setLead] = useState<any>(null);
+  const [callSessionId, setCallSessionId] = useState<string | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+  const [error, setError] = useState('');
+  const [micAllowed, setMicAllowed] = useState<boolean | null>(null);
+  const [aiSpeaking, setAiSpeaking] = useState(false);
+
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const dcRef = useRef<RTCDataChannel | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const transcriptRef = useRef<{ speaker: 'candidate' | 'ai_buyer'; text: string; timestampMs: number }[]>([]);
+  const [transcript, setTranscript] = useState<{ speaker: 'candidate' | 'ai_buyer'; text: string; timestampMs: number }[]>([]);
+  const transcriptEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [transcript]);
+
+  function pushTranscript(entry: { speaker: 'candidate' | 'ai_buyer'; text: string; timestampMs: number }) {
+    transcriptRef.current = [...transcriptRef.current, entry];
+    setTranscript([...transcriptRef.current]);
+  }
+
+  async function startCall() {
+    setPhase('connecting');
+    setError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      setMicAllowed(true);
+
+      const data = await api.post<any>(`/api/candidate/sessions/${sessionToken}/steps/${stepId}/crm-call/start`, { topLeadId });
+      setLead(data.lead);
+      setCallSessionId(data.callSessionId);
+
+      if (data.realtimeToken) {
+        const pc = new RTCPeerConnection();
+        pcRef.current = pc;
+
+        const audioEl = new Audio();
+        audioEl.autoplay = true;
+        audioRef.current = audioEl;
+
+        pc.ontrack = (e) => {
+          audioEl.srcObject = e.streams[0];
+        };
+
+        const dc = pc.createDataChannel('oai-events');
+        dcRef.current = dc;
+
+        dc.addEventListener('message', (e) => {
+          try {
+            const ev = JSON.parse(e.data);
+            if (ev.type === 'response.audio_transcript.done' && ev.transcript) {
+              pushTranscript({ speaker: 'ai_buyer', text: ev.transcript, timestampMs: Date.now() });
+              setAiSpeaking(false);
+            }
+            if (ev.type === 'response.audio.delta') setAiSpeaking(true);
+            if (ev.type === 'response.audio.done') setAiSpeaking(false);
+            if (ev.type === 'conversation.item.input_audio_transcription.completed' && ev.transcript) {
+              pushTranscript({ speaker: 'candidate', text: ev.transcript, timestampMs: Date.now() });
+            }
+          } catch {}
+        });
+
+        stream.getTracks().forEach(track => pc.addTrack(track, stream));
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        const sdpRes = await fetch(`https://api.openai.com/v1/realtime?model=${data.model}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${data.realtimeToken}`, 'Content-Type': 'application/sdp' },
+          body: offer.sdp,
+        });
+        const answerSdp = await sdpRes.text();
+        await pc.setRemoteDescription({ type: 'answer' as RTCSdpType, sdp: answerSdp });
+      }
+
+      timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
+      setPhase('active');
+    } catch (err: any) {
+      if (err?.name === 'NotAllowedError') {
+        setMicAllowed(false);
+        setError('Microfono non autorizzato. Consenti l\'accesso al microfono e riprova.');
+      } else {
+        setError(err?.message ?? 'Impossibile avviare la chiamata.');
+      }
+      setPhase('pre');
+    }
+  }
+
+  async function endCall() {
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    pcRef.current?.close();
+    pcRef.current = null;
+
+    if (callSessionId) {
+      await api.post(`/api/realtime-call-sessions/${callSessionId}/end-crm`, {
+        sessionToken,
+        transcript: transcriptRef.current,
+        outcome: { nextStepAgreed: false },
+        durationSeconds: elapsed,
+      }).catch(() => {});
+    }
+
+    setPhase('ended');
+  }
+
+  function confirmAndSubmit() {
+    onCallComplete({
+      callSessionId: callSessionId ?? '',
+      transcript: transcriptRef.current,
+      durationSeconds: elapsed,
+    });
+  }
+
+  const initials = (lead?.displayName ?? 'LD').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+  const timerLabel = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`;
+
+  // ── Layout: Lead info panel (left) + call interface (right)
+  return (
+    <div className="flex-1 flex flex-col bg-white overflow-hidden min-h-0">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+        {phase === 'pre' && (
+          <button onClick={onBack} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 transition">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polyline points="15 18 9 12 15 6"/></svg>
+            Torna
+          </button>
+        )}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-gray-900">Chiamata con {lead?.displayName ?? 'il lead #1'}</span>
+          {lead?.company && <span className="text-xs text-gray-400">— {lead.company}</span>}
+        </div>
+        {phase === 'active' && (
+          <div className="ml-auto flex items-center gap-2 font-mono text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-lg">
+            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            {timerLabel}
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-1 min-h-0">
+        {/* Left: Lead CRM card */}
+        <aside className="w-72 flex-shrink-0 border-r border-gray-200 overflow-y-auto bg-gray-50">
+          {lead ? (
+            <div className="p-4 space-y-4">
+              {/* Avatar + name */}
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-[15px] font-bold flex-shrink-0"
+                  style={{ background: lead.avatarColor ?? 'linear-gradient(135deg,#6366f1,#7c3aed)' }}>
+                  {initials}
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-[15px]">{lead.displayName}</p>
+                  {lead.contactRole && <p className="text-[12px] text-gray-500">{lead.contactRole}</p>}
+                  {lead.company && <p className="text-[13px] font-semibold text-gray-700">{lead.company}</p>}
+                </div>
+              </div>
+
+              {/* Key facts */}
+              <div className="space-y-1.5">
+                {lead.sector && (
+                  <div className="flex items-center gap-2 text-[12px]">
+                    <span className="text-gray-400 w-16 flex-shrink-0">Settore</span>
+                    <span className="text-gray-800 font-medium">{lead.sector}</span>
+                  </div>
+                )}
+                {lead.employees && (
+                  <div className="flex items-center gap-2 text-[12px]">
+                    <span className="text-gray-400 w-16 flex-shrink-0">Team</span>
+                    <span className="text-gray-800 font-medium">{lead.employees} persone</span>
+                  </div>
+                )}
+                {lead.revenue && (
+                  <div className="flex items-center gap-2 text-[12px]">
+                    <span className="text-gray-400 w-16 flex-shrink-0">Fatturato</span>
+                    <span className="text-gray-800 font-medium">{lead.revenue}</span>
+                  </div>
+                )}
+                {lead.location && (
+                  <div className="flex items-center gap-2 text-[12px]">
+                    <span className="text-gray-400 w-16 flex-shrink-0">Sede</span>
+                    <span className="text-gray-800 font-medium">{lead.location}</span>
+                  </div>
+                )}
+                {lead.stage && (
+                  <div className="flex items-center gap-2 text-[12px]">
+                    <span className="text-gray-400 w-16 flex-shrink-0">Stage</span>
+                    <span className="text-gray-800 font-medium">{lead.stage}</span>
+                  </div>
+                )}
+                {lead.value && (
+                  <div className="flex items-center gap-2 text-[12px]">
+                    <span className="text-gray-400 w-16 flex-shrink-0">Valore</span>
+                    <span className="text-gray-800 font-medium">€{lead.value.toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Contacts */}
+              {(lead.contactPhone || lead.contactEmail) && (
+                <div className="border-t border-gray-200 pt-3 space-y-1">
+                  {lead.contactPhone && (
+                    <div className="flex items-center gap-1.5 text-[12px] text-gray-600">
+                      <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .84h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                      {lead.contactPhone}
+                    </div>
+                  )}
+                  {lead.contactEmail && (
+                    <div className="flex items-center gap-1.5 text-[12px] text-gray-600">
+                      <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                      {lead.contactEmail}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Activities */}
+              {(lead.activities ?? []).length > 0 && (
+                <div className="border-t border-gray-200 pt-3">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">Attività recenti</p>
+                  <div className="space-y-2">
+                    {(lead.activities ?? []).map((a: any, i: number) => (
+                      <div key={i} className="flex gap-2">
+                        <span className="text-base flex-shrink-0">{a.icon}</span>
+                        <div>
+                          <p className="text-[12px] text-gray-700">{a.text}</p>
+                          <p className="text-[11px] text-gray-400">{a.date}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Signal strength */}
+              {lead.signalStrength && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Segnale</span>
+                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                    lead.signalStrength === 'alto' ? 'bg-green-100 text-green-700' :
+                    lead.signalStrength === 'medio' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-600'
+                  }`}>{lead.signalStrength}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-300 text-sm p-4">
+              Caricamento dati lead...
+            </div>
+          )}
+        </aside>
+
+        {/* Right: Call interface */}
+        <main className="flex-1 flex flex-col min-w-0">
+          {/* PRE-CALL */}
+          {phase === 'pre' && (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 gap-6">
+              <div className="text-center space-y-3">
+                <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center text-white text-2xl font-bold mx-auto">
+                  {initials}
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-gray-900">{lead?.displayName ?? topLeadId}</p>
+                  {lead?.contactRole && <p className="text-sm text-gray-500">{lead.contactRole}</p>}
+                  {lead?.company && <p className="text-sm text-gray-600 font-medium">{lead.company}</p>}
+                </div>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 max-w-sm text-center">
+                <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-1">Attenzione</p>
+                <p className="text-sm text-amber-800">Stai per chiamare il tuo lead #1. Il contatto sarà scettico e resistente — dovrai guadagnarti la sua fiducia.</p>
+              </div>
+              {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3 max-w-sm">{error}</p>}
+              {micAllowed === false && (
+                <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 max-w-sm">Consenti l'accesso al microfono nelle impostazioni del browser, poi riprova.</p>
+              )}
+              <button onClick={startCall} className="flex items-center gap-2 bg-green-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-green-700 active:scale-[0.98] transition shadow-sm">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
+                Chiama {lead?.displayName ?? 'il lead'}
+              </button>
+            </div>
+          )}
+
+          {/* CONNECTING */}
+          {phase === 'connecting' && (
+            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+              <div className="w-16 h-16 border-4 border-green-200 border-t-green-600 rounded-full animate-spin" />
+              <p className="text-sm text-gray-600">Connessione in corso...</p>
+            </div>
+          )}
+
+          {/* ACTIVE CALL */}
+          {phase === 'active' && (
+            <div className="flex-1 flex flex-col min-h-0">
+              {/* Call status bar */}
+              <div className="flex items-center gap-3 px-4 py-3 bg-slate-800 text-white flex-shrink-0">
+                <div className="relative">
+                  <div className="w-9 h-9 rounded-full bg-slate-600 flex items-center justify-center text-sm font-bold">{initials}</div>
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-slate-800" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-sm">{lead?.displayName}</p>
+                  <p className="text-xs text-slate-400">{lead?.company} · In chiamata</p>
+                </div>
+                {aiSpeaking && (
+                  <div className="flex items-end gap-0.5 h-5 mr-2">
+                    {[3, 5, 8, 5, 3].map((h, i) => (
+                      <div key={i} className="w-1 rounded-full bg-green-400 animate-pulse" style={{ height: `${h * 2}px`, animationDelay: `${i * 0.1}s` }} />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Transcript */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
+                {transcript.length === 0 && (
+                  <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+                    Inizia a parlare — la trascrizione apparirà qui
+                  </div>
+                )}
+                {transcript.map((m, i) => (
+                  <div key={i} className={`flex items-end gap-2 ${m.speaker === 'candidate' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    {m.speaker === 'ai_buyer' && (
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 mb-0.5"
+                        style={{ background: lead?.avatarColor ?? 'linear-gradient(135deg,#6366f1,#7c3aed)' }}>
+                        {initials}
+                      </div>
+                    )}
+                    <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
+                      m.speaker === 'candidate'
+                        ? 'bg-blue-600 text-white rounded-br-sm'
+                        : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm'
+                    }`}>
+                      {m.text}
+                    </div>
+                  </div>
+                ))}
+                {aiSpeaking && (
+                  <div className="flex items-end gap-2">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                      style={{ background: lead?.avatarColor ?? 'linear-gradient(135deg,#6366f1,#7c3aed)' }}>
+                      {initials}
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                      <div className="flex gap-1 items-center h-4">
+                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={transcriptEndRef} />
+              </div>
+
+              {/* Mic indicator + end button */}
+              <div className="flex-shrink-0 border-t border-gray-200 bg-white px-4 py-3 flex items-center gap-3">
+                <div className="flex items-center gap-2 text-xs text-green-600 font-medium">
+                  <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
+                  Microfono attivo — parla normalmente
+                </div>
+                <button onClick={endCall} className="ml-auto flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border-2 border-red-300 text-red-600 hover:bg-red-50 transition">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
+                  Termina chiamata
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ENDED */}
+          {phase === 'ended' && (
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="px-4 py-3 bg-slate-700 text-white flex items-center gap-3 flex-shrink-0">
+                <div className="w-9 h-9 rounded-full bg-slate-500 flex items-center justify-center text-sm font-bold">{initials}</div>
+                <div>
+                  <p className="font-semibold text-sm">{lead?.displayName}</p>
+                  <p className="text-xs text-slate-400">Chiamata terminata · {timerLabel}</p>
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
+                {transcript.map((m, i) => (
+                  <div key={i} className={`flex items-end gap-2 ${m.speaker === 'candidate' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    {m.speaker === 'ai_buyer' && (
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 mb-0.5"
+                        style={{ background: lead?.avatarColor ?? 'linear-gradient(135deg,#6366f1,#7c3aed)' }}>
+                        {initials}
+                      </div>
+                    )}
+                    <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
+                      m.speaker === 'candidate' ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm'
+                    }`}>
+                      {m.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex-shrink-0 border-t border-green-200 bg-green-50 px-4 py-3 flex items-center justify-between">
+                <p className="text-sm font-semibold text-green-700">Chiamata completata</p>
+                <button onClick={confirmAndSubmit} className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition">
+                  Invia risposta
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                </button>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}
+
 // ─── Rich CRM Renderer (3-column fullscreen) ──────────────────────────────────
 function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, submitting }: any) {
+  const { sessionToken, stepId } = useParams<{ sessionToken: string; stepId: string }>();
   const records: any[] = config.records ?? [];
   // Always allow ranking all leads
   const maxItems: number = records.length;
@@ -1087,6 +1515,7 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [callPhase, setCallPhase] = useState<'none' | 'calling' | 'done'>('none');
 
   // Auto-expand only the first section when a new lead is selected
   useEffect(() => {
@@ -1104,8 +1533,8 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
     return () => clearTimeout(t);
   }, [timeLeft]);
 
-  function emitAnswer(order: string[], expl: string, ns: Record<string, string>) {
-    onChange({ orderedRecordIds: order, explanation: expl, leadNotes: ns });
+  function emitAnswer(order: string[], expl: string, ns: Record<string, string>, salesCallData?: any) {
+    onChange({ orderedRecordIds: order, explanation: expl, leadNotes: ns, ...(salesCallData ? { salesCallData } : {}) });
   }
 
   function togglePriority(id: string, method: 'button' | 'remove' = 'button') {
@@ -1158,7 +1587,30 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
   const timerDanger = timeLeft <= 120;
   const timerWarning = timeLeft <= 300 && !timerDanger;
 
+  // Sales call phase — full-screen voice call with #1 lead
+  if (callPhase === 'calling' && priorityOrder[0]) {
+    return (
+      <CrmLeadCallScreen
+        sessionToken={sessionToken}
+        stepId={stepId}
+        topLeadId={priorityOrder[0]}
+        onCallComplete={(callData) => {
+          emitAnswer(priorityOrder, explanation, notes, {
+            callSessionId: callData.callSessionId,
+            transcript: callData.transcript,
+            outcome: { nextStepAgreed: false },
+            durationSeconds: callData.durationSeconds,
+          });
+          setCallPhase('done');
+          onSubmit?.();
+        }}
+        onBack={() => setCallPhase('none')}
+      />
+    );
+  }
+
   if (showExplanation) {
+    const topLead = records.find(r => r.id === priorityOrder[0]);
     return (
       <div className="flex-1 flex flex-col bg-white overflow-hidden min-h-0">
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-gray-50 flex-shrink-0">
@@ -1180,15 +1632,18 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                   const lead = records.find(r => r.id === id);
                   if (!lead) return null;
                   return (
-                    <div key={id} className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-lg px-4 py-2.5">
-                      <span className="text-sm font-bold text-blue-500 w-5 flex-shrink-0">#{i + 1}</span>
+                    <div key={id} className={`flex items-center gap-3 border rounded-lg px-4 py-2.5 ${i === 0 && config.enableSalesCall ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-100'}`}>
+                      <span className={`text-sm font-bold w-5 flex-shrink-0 ${i === 0 && config.enableSalesCall ? 'text-green-600' : 'text-blue-500'}`}>#{i + 1}</span>
                       <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[11px] font-bold" style={{ background: lead.avatarColor ?? 'linear-gradient(135deg,#6366f1,#7c3aed)' }}>
                         {lead.displayName?.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-gray-900">{lead.displayName}</p>
                         <p className="text-xs text-gray-500">{lead.company}{lead.contactRole ? ` · ${lead.contactRole}` : ''}</p>
                       </div>
+                      {i === 0 && config.enableSalesCall && (
+                        <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-full flex-shrink-0">Chiamerai</span>
+                      )}
                     </div>
                   );
                 })}
@@ -1206,17 +1661,38 @@ function RichCrmRenderer({ config, answer, onChange, onTrackEvent, onSubmit, sub
                 className="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-300"
               />
             </div>
-            <button
-              onClick={onSubmit}
-              disabled={submitting}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-40 transition"
-            >
-              {submitting ? (
-                <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Invio in corso...</>
-              ) : (
-                <>Invia risposta <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg></>
-              )}
-            </button>
+
+            {config.enableSalesCall && topLead ? (
+              <div className="space-y-3">
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+                  <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .84h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                  <div>
+                    <p className="text-sm font-semibold text-blue-800">Prossimo step: chiamata con {topLead.displayName}</p>
+                    <p className="text-xs text-blue-600 mt-0.5">Hai selezionato <strong>{topLead.company}</strong> come lead #1. Ora dovrai chiamarlo e convincerlo. Sarà scettico.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setCallPhase('calling')}
+                  disabled={submitting}
+                  className="w-full flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-green-700 disabled:opacity-40 transition"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
+                  Chiama {topLead.displayName}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onSubmit}
+                disabled={submitting}
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-40 transition"
+              >
+                {submitting ? (
+                  <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Invio in corso...</>
+                ) : (
+                  <>Invia risposta <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg></>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -293,6 +293,24 @@ function CrmEditor({ config, onChange, errors = new Set<string>() }: { config: a
         </div>
       </Section>
 
+      <Section title="📞 Chiamata di vendita">
+        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+          <input type="checkbox" checked={!!c.enableSalesCall}
+            onChange={e => set({ enableSalesCall: e.target.checked })}
+            className="w-4 h-4 rounded border-ink-300 text-brand" />
+          <div>
+            <p className="text-[13px] font-semibold text-ink-900">Abilita chiamata dopo la prioritizzazione</p>
+            <p className="text-[12px] text-ink-500">Dopo aver rankato i lead, il candidato chiamerà vocalmente il #1 in lista usando l'AI real-time. Il buyer sarà fortemente resistente.</p>
+          </div>
+        </label>
+        {c.enableSalesCall && (
+          <Field label="Contesto aggiuntivo per la chiamata (opzionale)">
+            <Textarea value={c.salesCallContext ?? ''} onChange={v => set({ salesCallContext: v })}
+              placeholder="Es. Il candidato vende un CRM SaaS. Il contesto di mercato è..." rows={3} />
+          </Field>
+        )}
+      </Section>
+
       <Section title="Contesto scenario" error={errors.has('scenarioContext') || errors.has('taskPrompt')}>
         <Textarea value={c.scenarioContext ?? ''} onChange={v => set({ scenarioContext: v })} placeholder="Descrivi la situazione (es. Sei un AE, è lunedì mattina...)" rows={3} error={errors.has('scenarioContext') && !c.scenarioContext?.trim()} />
         <Textarea value={c.taskPrompt ?? ''} onChange={v => set({ taskPrompt: v })} placeholder="Istruzione per il candidato (es. Prioritizza questi account...)" rows={2} error={errors.has('taskPrompt') && !c.taskPrompt?.trim()} />
@@ -361,6 +379,49 @@ function CrmEditor({ config, onChange, errors = new Set<string>() }: { config: a
                 </Field>
                 <Field label="Razionale nascosto 🔒"><Inp value={r.hiddenRationale ?? ''} onChange={v => updateRecord(i, { hiddenRationale: v })} placeholder="Perché questo score" /></Field>
               </div>
+
+              {c.enableSalesCall && (
+                <div className="border-t border-ink-100 pt-3 flex flex-col gap-2">
+                  <p className="text-[11px] font-bold text-ink-400 uppercase tracking-wide">Obiezioni chiamata 🔒 (visibili solo all'AI)</p>
+                  {(r.salesCallObjections ?? []).map((obj: any, oi: number) => (
+                    <div key={oi} className="border border-ink-200 rounded-lg p-3 flex flex-col gap-2 bg-red-50/30">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-ink-400">Obiezione {oi + 1}</span>
+                        <button type="button" onClick={() => updateRecord(i, { salesCallObjections: (r.salesCallObjections ?? []).filter((_: any, k: number) => k !== oi) })}
+                          className="text-ink-300 hover:text-danger p-0.5"><Trash2 size={11} /></button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Field label="Tipo">
+                          <select value={obj.type ?? 'need'}
+                            onChange={e => updateRecord(i, { salesCallObjections: (r.salesCallObjections ?? []).map((o: any, k: number) => k === oi ? { ...o, type: e.target.value } : o) })}
+                            className="w-full border border-ink-200 rounded-lg px-2 py-1 text-[12px] bg-white focus:outline-none focus:ring-1 focus:ring-brand/20 focus:border-brand transition">
+                            {['budget','timing','authority','need','trust','competition','implementation','risk','internal_resistance'].map(t => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        </Field>
+                        <Field label="Severità">
+                          <select value={obj.severity ?? 'medium'}
+                            onChange={e => updateRecord(i, { salesCallObjections: (r.salesCallObjections ?? []).map((o: any, k: number) => k === oi ? { ...o, severity: e.target.value } : o) })}
+                            className="w-full border border-ink-200 rounded-lg px-2 py-1 text-[12px] bg-white focus:outline-none focus:ring-1 focus:ring-brand/20 focus:border-brand transition">
+                            <option value="low">Bassa</option>
+                            <option value="medium">Media</option>
+                            <option value="high">Alta</option>
+                          </select>
+                        </Field>
+                      </div>
+                      <Field label="Descrizione obiezione">
+                        <Textarea value={obj.description ?? ''} rows={2}
+                          onChange={v => updateRecord(i, { salesCallObjections: (r.salesCallObjections ?? []).map((o: any, k: number) => k === oi ? { ...o, description: v } : o) })}
+                          placeholder="Es. Il budget è già stato allocato per il prossimo anno e non c'è flessibilità" />
+                      </Field>
+                    </div>
+                  ))}
+                  <button type="button"
+                    onClick={() => updateRecord(i, { salesCallObjections: [...(r.salesCallObjections ?? []), { id: uid(), type: 'need', description: '', severity: 'medium' }] })}
+                    className="flex items-center gap-1.5 text-[12px] text-red-600 font-semibold hover:underline w-fit">
+                    <Plus size={11} /> Aggiungi obiezione
+                  </button>
+                </div>
+              )}
             </div>
           ))}
           <button type="button"
